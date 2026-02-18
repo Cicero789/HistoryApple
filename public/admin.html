@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChronoQuest — Teacher Admin</title>
+  <link rel="stylesheet" href="/src/css/main.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+</head>
+<body class="admin-page">
+  <nav class="main-nav glass">
+    <div class="nav-brand">
+      <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px">
+        <span class="logo-icon">⏳</span>
+        <span class="logo-text">ChronoQuest</span>
+      </a>
+    </div>
+    <div class="nav-links">
+      <span class="admin-badge">🎓 Teacher Admin</span>
+      <a href="/" class="nav-link">← Back to Game</a>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar glass">
+      <h3 class="sidebar-title">Admin Tools</h3>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link active" data-tab="overview" href="#">📊 Overview</a>
+        <a class="sidebar-link" data-tab="create" href="#">➕ Create Chapter</a>
+        <a class="sidebar-link" data-tab="chapters" href="#">📚 Manage Chapters</a>
+        <a class="sidebar-link" data-tab="glossary" href="#">📖 Glossary</a>
+        <a class="sidebar-link" data-tab="help" href="#">❓ Help</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+
+      <!-- Overview Tab -->
+      <div class="admin-tab active" id="tab-overview">
+        <h1 class="admin-title">Welcome, Teacher 👋</h1>
+        <p class="admin-desc">ChronoQuest turns textbook content into immersive historical RPG experiences. Add chapters, monitor progress, and customize the game for your students.</p>
+        <div class="admin-stats-grid" id="adminStats">
+          <div class="admin-stat-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-number" id="totalChapters">–</div>
+            <div class="stat-label">Chapters Available</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="stat-icon">🌍</div>
+            <div class="stat-number" id="totalRegions">–</div>
+            <div class="stat-label">Historical Regions</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-number" id="totalTerms">–</div>
+            <div class="stat-label">Glossary Terms</div>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="action-grid">
+            <button class="action-btn" onclick="switchTab('create')">
+              <span>➕</span>
+              <span>Add New Chapter</span>
+            </button>
+            <button class="action-btn" onclick="switchTab('chapters')">
+              <span>📚</span>
+              <span>View All Chapters</span>
+            </button>
+            <button class="action-btn" onclick="switchTab('glossary')">
+              <span>📖</span>
+              <span>Edit Glossary</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Chapter Tab -->
+      <div class="admin-tab" id="tab-create">
+        <h1 class="admin-title">Create New Chapter</h1>
+        <p class="admin-desc">Paste your textbook content below. ChronoQuest will help you structure it as an interactive chapter. You can edit each section before saving.</p>
+
+        <div class="create-steps">
+          <!-- Step 1: Basic Info -->
+          <div class="create-step" id="step1">
+            <div class="step-header">
+              <span class="step-num">1</span>
+              <h3>Chapter Information</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Chapter Title *</label>
+                <input type="text" class="form-input" id="chTitle" placeholder="e.g., Feudal Japan: Shadows of the Shogun" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Historical Era *</label>
+                <input type="text" class="form-input" id="chEra" placeholder="e.g., Feudal Japan (1185–1868)" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Region / Civilization *</label>
+                <input type="text" class="form-input" id="chRegion" placeholder="e.g., Japan, Americas, Rome..." />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Difficulty</label>
+                <select class="form-input" id="chDifficulty">
+                  <option>Beginner</option>
+                  <option>Intermediate</option>
+                  <option>Advanced</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Visual Theme</label>
+                <select class="form-input" id="chTheme">
+                  <option value="sepia">Sepia (Ancient/East Asia)</option>
+                  <option value="earth">Earth Tones (Americas/Africa)</option>
+                  <option value="roman">Stone/Marble (Rome/Greece)</option>
+                  <option value="dark">Dark (Medieval/War)</option>
+                  <option value="ocean">Ocean Blue (Maritime/Trade)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Chapter Icon (emoji)</label>
+                <input type="text" class="form-input" id="chIcon" placeholder="e.g., ⛩️ 🦅 🏛️ 🌊" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <textarea class="form-input" id="chDesc" rows="2" placeholder="Brief description shown on chapter selection screen..."></textarea>
+            </div>
+          </div>
+
+          <!-- Step 2: Textbook Content -->
+          <div class="create-step" id="step2">
+            <div class="step-header">
+              <span class="step-num">2</span>
+              <h3>Textbook Content</h3>
+            </div>
+            <p class="step-desc">Paste your textbook text here (up to ~2000 words). The system will extract key terms, events, geographies, and suggest game scenarios.</p>
+            <div class="form-group">
+              <label class="form-label">Textbook Text *</label>
+              <textarea class="form-input" id="chTextbook" rows="12" placeholder="Paste your textbook chapter content here...&#10;&#10;The system will automatically extract:&#10;• Key historical terms and definitions&#10;• Important events and dates&#10;• Geographic locations&#10;• Cultural and economic elements&#10;• Possible decision points for gameplay"></textarea>
+            </div>
+            <button class="btn-primary" id="analyzeTextBtn">🔍 Analyze & Extract Key Elements</button>
+            <div class="analysis-result" id="analysisResult" style="display:none"></div>
+          </div>
+
+          <!-- Step 3: Characters -->
+          <div class="create-step" id="step3">
+            <div class="step-header">
+              <span class="step-num">3</span>
+              <h3>Playable Characters</h3>
+            </div>
+            <p class="step-desc">Define two character options: an outsider (traveler/observer) and an insider (local/indigenous person).</p>
+            <div class="char-form-grid">
+              <div class="char-form-box">
+                <h4>Character 1: The Traveler (Outsider)</h4>
+                <input type="text" class="form-input" id="char1Name" placeholder="e.g., Foreign Merchant" />
+                <textarea class="form-input" id="char1Desc" rows="2" placeholder="Brief character description..."></textarea>
+                <input type="text" class="form-input" id="char1Avatar" placeholder="Emoji avatar (e.g., 🧳)" />
+              </div>
+              <div class="char-form-box">
+                <h4>Character 2: The Local (Insider)</h4>
+                <input type="text" class="form-input" id="char2Name" placeholder="e.g., Peasant Farmer" />
+                <textarea class="form-input" id="char2Desc" rows="2" placeholder="Brief character description..."></textarea>
+                <input type="text" class="form-input" id="char2Avatar" placeholder="Emoji avatar (e.g., 🌾)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Key Events / Scenes -->
+          <div class="create-step" id="step4">
+            <div class="step-header">
+              <span class="step-num">4</span>
+              <h3>Historical Scenes & Decision Points</h3>
+            </div>
+            <p class="step-desc">Define 3-5 key moments from your textbook that become interactive decision points. Each scene should present a genuine historical dilemma.</p>
+            <div id="scenesContainer">
+              <div class="scene-entry" data-scene="0">
+                <div class="scene-entry-header">
+                  <span class="scene-entry-num">Scene 1</span>
+                  <button class="remove-scene" onclick="removeScene(0)" style="display:none">Remove</button>
+                </div>
+                <input type="text" class="form-input" placeholder="Scene title..." name="sceneTitle" />
+                <textarea class="form-input" rows="3" placeholder="Describe the historical moment and context..." name="sceneContext"></textarea>
+                <div class="scene-choices-label">Decision Point — 3 choices:</div>
+                <div class="scene-choices">
+                  <input type="text" class="form-input choice-input" placeholder="Choice A: ..." />
+                  <input type="text" class="form-input choice-input" placeholder="Choice B: ..." />
+                  <input type="text" class="form-input choice-input" placeholder="Choice C: ..." />
+                </div>
+                <input type="text" class="form-input" placeholder="Key historical term to teach in this scene..." name="sceneTerm" />
+              </div>
+            </div>
+            <button class="btn-ghost" id="addSceneBtn">+ Add Another Scene</button>
+          </div>
+
+          <!-- Step 5: Economy -->
+          <div class="create-step" id="step5">
+            <div class="step-header">
+              <span class="step-num">5</span>
+              <h3>Economy & Jobs</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Currency Name</label>
+                <input type="text" class="form-input" id="chCurrency" placeholder="e.g., mon, denarii, trade beads" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Starting Money</label>
+                <input type="number" class="form-input" id="chStartMoney" value="15" />
+              </div>
+            </div>
+            <p class="step-desc">Define 2-3 historically accurate jobs for your era:</p>
+            <div id="jobsContainer">
+              <div class="job-entry">
+                <div class="form-grid">
+                  <input type="text" class="form-input" name="jobTitle" placeholder="Job title (e.g., Rice Paddy Worker)" />
+                  <input type="number" class="form-input" name="jobPay" placeholder="Pay per day" value="6" />
+                </div>
+                <input type="text" class="form-input" name="jobDesc" placeholder="Brief job description..." />
+                <input type="text" class="form-input" name="jobNote" placeholder="Historical context note..." />
+              </div>
+            </div>
+            <button class="btn-ghost" id="addJobBtn">+ Add Job</button>
+          </div>
+
+          <!-- Save -->
+          <div class="create-actions">
+            <button class="btn-ghost" id="previewChapterBtn">👁️ Preview Chapter</button>
+            <button class="btn-primary" id="saveChapterBtn">💾 Save Chapter</button>
+          </div>
+          <div class="save-status" id="saveStatus"></div>
+        </div>
+      </div>
+
+      <!-- Manage Chapters Tab -->
+      <div class="admin-tab" id="tab-chapters">
+        <h1 class="admin-title">Manage Chapters</h1>
+        <div class="chapters-admin-list" id="chaptersAdminList">
+          <div class="loading-chapters"><div class="spinner"></div><p>Loading chapters...</p></div>
+        </div>
+      </div>
+
+      <!-- Glossary Tab -->
+      <div class="admin-tab" id="tab-glossary">
+        <h1 class="admin-title">Glossary Manager</h1>
+        <p class="admin-desc">The glossary provides in-game definitions when players encounter historical terms. Add, edit, or remove terms here.</p>
+        <div class="glossary-add-form glass">
+          <h3>Add New Term</h3>
+          <div class="form-grid">
+            <input type="text" class="form-input" id="newTermKey" placeholder="Term (e.g., feudalism)" />
+            <input type="text" class="form-input" id="newTermIcon" placeholder="Icon emoji" />
+          </div>
+          <textarea class="form-input" id="newTermDef" rows="3" placeholder="Definition..."></textarea>
+          <input type="text" class="form-input" id="newTermLink" placeholder="Educational link (optional)" />
+          <button class="btn-primary" id="addTermBtn">+ Add Term</button>
+        </div>
+        <div class="glossary-list" id="adminGlossaryList"></div>
+      </div>
+
+      <!-- Help Tab -->
+      <div class="admin-tab" id="tab-help">
+        <h1 class="admin-title">Teacher Guide</h1>
+        <div class="help-content">
+          <div class="help-section">
+            <h3>🎯 How ChronoQuest Works</h3>
+            <p>ChronoQuest converts historical content into interactive role-playing experiences. Students make decisions that parallel real historical choices, learning through consequence rather than memorization.</p>
+          </div>
+          <div class="help-section">
+            <h3>📚 Adding Chapters</h3>
+            <ol>
+              <li>Go to "Create Chapter" and fill in the basic information</li>
+              <li>Paste textbook content (up to ~2000 words) and click "Analyze"</li>
+              <li>Define two characters: an outsider traveler and a local indigenous person</li>
+              <li>Create 3-5 decision points based on key historical events</li>
+              <li>Set up the era-appropriate economy and jobs</li>
+              <li>Save — the chapter is immediately available to students!</li>
+            </ol>
+          </div>
+          <div class="help-section">
+            <h3>🌍 Design Philosophy</h3>
+            <ul>
+              <li><strong>Root for underdogs:</strong> The game centers indigenous and marginalized perspectives</li>
+              <li><strong>Traps and lessons:</strong> "Wrong" choices teach, not punish — students retry and learn</li>
+              <li><strong>Historical accuracy:</strong> All economic figures, jobs, and cultural elements should be era-specific</li>
+              <li><strong>Sensitivity:</strong> Avoid glorifying colonialism, violence, or oppression. Present history honestly</li>
+            </ul>
+          </div>
+          <div class="help-section">
+            <h3>💡 Tips for Great Chapters</h3>
+            <ul>
+              <li>Include at least one "trap" choice — an apparently good option that mirrors a real historical mistake</li>
+              <li>Research era-appropriate wages and prices for the economy system</li>
+              <li>Define 8-12 key glossary terms that appear in your chapter</li>
+              <li>Include a rest mechanic (inn/temple/outdoors) that reflects the era's travel culture</li>
+              <li>End with a quiz reviewing 3-5 key terms or events</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/src/js/admin.js"></script>
+</body>
+</html>

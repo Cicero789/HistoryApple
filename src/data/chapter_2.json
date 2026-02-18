@@ -1,0 +1,209 @@
+{
+  "id": 2,
+  "title": "Pre-Columbian Americas: Voices of the First Nations",
+  "era": "Pre-Columbian Americas (900–1500 CE)",
+  "region": "Americas",
+  "difficulty": "Intermediate",
+  "thumbnail": "🦅",
+  "description": "Walk the ancient trade routes of North America. Experience indigenous civilizations before — and during — European contact. Whose story will you carry forward?",
+  "theme": "earth",
+  "ambience": "native",
+  "startingStats": { "health": 100, "money": 20, "currency": "trade beads", "inventory": ["dried corn", "moccasins", "cedar pouch"] },
+  "characters": [
+    { "id": "traveler", "name": "Aztec Trader", "description": "A pochteca merchant from Tenochtitlan, traveling the extensive Mesoamerican trade network.", "avatar": "🌽", "bonus": "trade" },
+    { "id": "local", "name": "Haudenosaunee Youth", "description": "A young member of the Iroquois Confederacy, learning the ways of your nation's Great Law of Peace.", "avatar": "🦅", "bonus": "diplomacy" }
+  ],
+  "glossary": ["Aztec", "Maya", "Iroquois Confederacy", "pochteca", "teocalli", "quipu", "Three Sisters", "Great Law of Peace", "Cahokia", "bison"],
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "narrative",
+      "background": "great-plains",
+      "title": "A Continent Alive",
+      "text": "The year is 1200 CE. The Americas are home to millions of people across hundreds of distinct nations, each with sophisticated cultures, economies, trade networks, and governments. This is NOT a primitive land — it is a world as complex as anything in Europe or Asia.\n\nYou stand at the edge of a vast trade network that stretches from the Gulf of Mexico to the Great Lakes, from the Pacific coast to the Mississippi valley. The great city of Cahokia (near modern St. Louis) is larger than London. Tenochtitlan will become the largest city in the Western Hemisphere. The Maya have mapped the stars with precision that won't be matched in Europe for centuries.\n\nYour journey begins here.",
+      "educationalTerm": "Cahokia",
+      "educationalNote": "**Cahokia** (near modern St. Louis, Illinois) was a pre-Columbian city that at its peak around 1100 CE had a population of 10,000–20,000 people — larger than London at the same time. It featured massive earthen mounds, plazas, and a sophisticated urban grid. Its collapse around 1350 CE remains one of history's great mysteries.",
+      "next": "trade_routes"
+    },
+    {
+      "id": "trade_routes",
+      "type": "choice",
+      "background": "trade-path",
+      "title": "The Great Trade Network",
+      "npc": { "name": "Elder Tlapalteotl", "avatar": "🦜" },
+      "dialogue": "Young traveller, you stand at a crossroads of our great trading network. To the south: the turquoise trails to Chaco Canyon. To the east: the rivers that lead to Cahokia and the Haudenosaunee. To the west: the coastal routes where shell beads flow like water. Which path calls to you?",
+      "educationalTerm": "Three Sisters",
+      "educationalNote": "The **Three Sisters** (corn, beans, squash) were the foundation of agriculture across the Americas. Planted together, they form a perfect ecosystem: corn stalks support bean vines, beans fix nitrogen in the soil, squash leaves shade the ground keeping moisture in. This agricultural innovation sustained millions across the continent.",
+      "choices": [
+        { "text": "Follow the turquoise trail to Chaco Canyon 🏔️", "outcome": "chaco_arrival", "statChange": { "health": -5 }, "hint": "A long journey through beautiful desert..." },
+        { "text": "Travel the river to Cahokia — the great city 🏙️", "outcome": "cahokia_arrival", "statChange": {}, "hint": "The heart of Mississippian culture..." },
+        { "text": "Head north to the Haudenosaunee Confederacy 🦅", "outcome": "iroquois_council", "statChange": { "money": 5 } }
+      ]
+    },
+    {
+      "id": "chaco_arrival",
+      "type": "narrative",
+      "background": "canyon-desert",
+      "title": "Chaco Canyon: Cathedral of the Desert",
+      "text": "After several days walking through sage-scented desert, you arrive at Chaco Canyon — an architectural wonder. Great Houses rise four stories from the canyon floor, precisely aligned with solar and lunar cycles. This is a pilgrimage site, a trade hub, and an astronomical observatory all in one.\n\nThe builders, the Ancestral Puebloans, mastered desert survival: collecting water in stone cisterns, growing corn in sandy soil through careful irrigation, trading turquoise as far as Mesoamerica. Hundreds of miles of straight roads radiate outward.\n\nA trader asks what you've brought to exchange.",
+      "next": "chaco_trade"
+    },
+    {
+      "id": "cahokia_arrival",
+      "type": "narrative",
+      "background": "mound-city",
+      "title": "Cahokia: The Great City",
+      "text": "The Mississippi River brings you to Cahokia — and you stop, stunned. Monks Mound rises 100 feet from the earth, larger at its base than the Great Pyramid of Giza. Around it, a planned city of wooden buildings, plazas, and smaller mounds stretches for miles.\n\n20,000 people live here. You can smell food cooking, hear drums, see people from dozens of nations trading. Copper from Lake Superior. Mica from the Appalachians. Shells from the Gulf Coast. Cahokia is the Amazon of its day — everything passes through here.\n\nA market official approaches to register your trading goods.",
+      "educationalTerm": "quipu",
+      "educationalNote": "While Cahokia's people didn't use the quipu (that was Incan technology), indigenous record-keeping systems across the Americas were sophisticated. The **quipu** (Inca) used knotted strings to record numbers, census data, and possibly narratives. Wampum belts among northeastern nations recorded treaties and history. Indigenous recordkeeping was real and complex.",
+      "next": "cahokia_market"
+    },
+    {
+      "id": "iroquois_council",
+      "type": "narrative",
+      "background": "longhouse-forest",
+      "title": "The Great Law of Peace",
+      "text": "You arrive at a longhouse village of the Haudenosaunee (Iroquois) Confederacy — five nations (Mohawk, Oneida, Onondaga, Cayuga, Seneca) united under a democratic constitution called the Great Law of Peace.\n\nThis democratic government — where leaders are selected by clan mothers, laws protect individual rights, and decisions require consensus — predates the United States Constitution by 400 years. Many historians argue it directly influenced the Founding Fathers.\n\nA clan mother, Grandmother Sky Woman, invites you to observe the Grand Council.",
+      "educationalTerm": "Great Law of Peace",
+      "educationalNote": "The **Haudenosaunee Great Law of Peace** (Gayanashagowa) was a sophisticated constitution uniting five (later six) nations. It featured: separation of powers, checks and balances, women's voting rights (clan mothers chose leaders), impeachment procedures, and protection of freedom of speech — centuries before these concepts appeared in European governments. Benjamin Franklin specifically studied it.",
+      "next": "council_observation"
+    },
+    {
+      "id": "council_observation",
+      "type": "choice",
+      "background": "council-fire",
+      "title": "The Grand Council Speaks",
+      "npc": { "name": "Grandmother Sky Woman", "avatar": "👵" },
+      "dialogue": "Visitor, you are welcome to observe. We debate today a treaty proposal — a neighboring nation seeks alliance. Some say yes; others urge caution. Under our Great Law, all fifty sachems must agree before any decision is made. What wisdom would you offer, if asked?",
+      "choices": [
+        { "text": "Urge swift decision — unity requires compromise 🤝", "outcome": "council_compromise", "statChange": { "money": 8 } },
+        { "text": "Support the cautious voices — observe longer 🦉", "outcome": "council_caution", "statChange": { "health": 10 } },
+        { "text": "Suggest sending scouts first to verify intentions 🏹", "outcome": "council_scout", "statChange": { "money": 5, "health": 5 } }
+      ]
+    },
+    {
+      "id": "council_compromise",
+      "type": "narrative",
+      "background": "treaty-ceremony",
+      "title": "Alliance Forged",
+      "text": "Your words resonate with several sachems. After hours of respectful debate — a hallmark of the Great Law's process — consensus is reached. The alliance is formed. Trade flows, and you are gifted beautifully crafted wampum beads as a thank-you.\n\n'Remember,' Sky Woman tells you, 'our Law says: In every deliberation, we must consider the impact of our decisions on the seventh generation yet to come.' This principle of intergenerational responsibility is one of the most profound political ideas in human history.",
+      "statChange": { "money": 8 },
+      "next": "european_horizon"
+    },
+    {
+      "id": "council_caution",
+      "type": "narrative",
+      "background": "forest-twilight",
+      "title": "Wisdom in Waiting",
+      "text": "The council waits, observes, and ultimately makes a more informed decision. It takes longer, but the alliance formed is stronger for it. You recover energy resting in the longhouse village, eating the 'Three Sisters' — corn, beans, squash — cooked in a communal pot.\n\n'Consensus is not weakness,' a young sachem tells you. 'It is the recognition that one person's voice is not worth more than another's.' You gain health from the rest and profound respect from the community.",
+      "statChange": { "health": 10 },
+      "next": "european_horizon"
+    },
+    {
+      "id": "council_scout",
+      "type": "narrative",
+      "background": "forest-path",
+      "title": "Intelligence and Caution",
+      "text": "The scouts return with crucial information that changes the negotiation entirely — the neighboring nation had hidden motives that would have harmed the Confederacy. Your suggestion potentially avoided conflict. 'You think like a good leader,' Sky Woman nods approvingly.\n\nYou receive both trading goods and knowledge — the most valuable currency of all.",
+      "statChange": { "money": 5, "health": 5 },
+      "next": "european_horizon"
+    },
+    {
+      "id": "chaco_trade",
+      "type": "minigame",
+      "background": "trading-post",
+      "title": "The Turquoise Economy",
+      "text": "Trading at Chaco Canyon requires understanding value. Turquoise from these mines travels as far as Mexico. What will you trade your goods for?",
+      "jobs": [
+        { "id": "turquoise_carry", "title": "Carry Turquoise 💎", "description": "Help transport polished turquoise to waiting traders. Heavy but valuable work.", "pay": 12, "time": "full day", "difficulty": "hard", "historicalNote": "Turquoise was sacred to Pueblo peoples and traded throughout the Americas." },
+        { "id": "corn_grind", "title": "Grind Corn 🌽", "description": "Help prepare cornmeal for the feast. Ancient and essential skill.", "pay": 5, "time": "half day", "difficulty": "easy" },
+        { "id": "pottery", "title": "Assist Pottery Makers 🏺", "description": "Help shape and fire distinctive Chacoan black-and-white pottery.", "pay": 8, "time": "full day", "difficulty": "medium", "historicalNote": "Chacoan pottery was traded widely and is recognizable for its geometric black-on-white designs." }
+      ],
+      "next": "european_horizon"
+    },
+    {
+      "id": "cahokia_market",
+      "type": "minigame",
+      "background": "great-market",
+      "title": "Cahokia's Grand Market",
+      "text": "The market is overwhelming — goods from across the continent change hands here. You need to earn trade credit to continue your journey.",
+      "jobs": [
+        { "id": "copper_work", "title": "Copper Working Assistant 🔨", "description": "Help master copper smiths from Lake Superior hammer and anneal copper into tools and ornaments.", "pay": 10, "time": "full day", "difficulty": "hard" },
+        { "id": "canoe_paddler", "title": "River Canoe Paddler 🛶", "description": "Paddle trade goods upriver for merchants. Exhausting but pays well.", "pay": 7, "time": "half day", "difficulty": "medium", "historicalNote": "Birchbark and dugout canoes were the highways of North America, enabling trade across thousands of miles." },
+        { "id": "storyteller_assist", "title": "Assist the Storyteller 🪶", "description": "Help gather and arrange the storyteller's materials for the evening ceremony.", "pay": 4, "time": "half day", "difficulty": "easy" }
+      ],
+      "next": "european_horizon"
+    },
+    {
+      "id": "european_horizon",
+      "type": "narrative",
+      "background": "ocean-horizon",
+      "title": "Shadows from the East — 1492",
+      "text": "Decades pass in your journey. It is now 1492. Stories begin arriving from coastal peoples: strange wooden islands with cloth wings have appeared on the eastern horizon. Men with pale skin, metal suits, and weapons that thunder have landed.\n\nSome nations initially welcome them — trading, curiosity, hospitality (a deep cultural value across the Americas). Others are immediately suspicious.\n\nWithin your lifetime, the world you know will be utterly transformed. Diseases you have no immunity to will arrive with the ships. European powers will claim lands that have been home to your people for 15,000 years.\n\nWhat do you do with what you know?",
+      "educationalTerm": "Aztec",
+      "educationalNote": "The **Aztec (Mexica) Empire** at its height (1400s) controlled central Mexico, with Tenochtitlan (modern Mexico City) housing 200,000–400,000 people — one of the world's largest cities. Their 'fall' to Cortés in 1521 involved disease (smallpox killed 90%+ of the population), indigenous allies of Cortés who resented Aztec power, AND European military technology. It was never just 'conquest' — it was catastrophic collapse.",
+      "next": "contact_choice"
+    },
+    {
+      "id": "contact_choice",
+      "type": "choice",
+      "background": "ships-approaching",
+      "title": "First Contact — A Fateful Decision",
+      "npc": { "name": "War Chief Thunderbird", "avatar": "⚡" },
+      "dialogue": "These strangers come with gifts in one hand and weapons in the other. We have heard from southern nations what their 'friendship' costs. Coastal peoples who welcomed them are now enslaved. Yet some say if we trade carefully, we can gain metal tools without losing our freedom. What path do we choose?",
+      "choices": [
+        { "text": "Welcome them openly — gift exchange and trade 🎁", "outcome": "welcome_europeans", "statChange": { "money": 20 }, "isTrap": true, "hint": "This seems like the friendly choice..." },
+        { "text": "Maintain distance — observe, then decide 👀", "outcome": "observe_europeans", "statChange": { "health": 10 } },
+        { "text": "Form alliances with other nations immediately — united resistance 🤝", "outcome": "alliance_resist", "statChange": { "money": -5, "health": 15 } }
+      ]
+    },
+    {
+      "id": "welcome_europeans",
+      "type": "setback",
+      "background": "colonization-scene",
+      "title": "⚠️ The Trap of False Friendship",
+      "text": "⚠️ HISTORY CHECK! You chose open welcome — and history shows this was often catastrophic!\n\nInitial trade turned to dependency. Then the diseases arrived — smallpox, measles, influenza — against which your people had no immunity. 90% of the population of many nations died in the first century of contact. This was the greatest demographic catastrophe in human history.\n\nThe 'friendly' traders brought more ships. More soldiers. Priests who called your sacred ways 'evil.' Legal documents claiming lands your people had lived on for generations.\n\nThis is not to blame those who showed hospitality — generosity was a VIRTUE. It is to name the truth: European colonialism was built on exploitation, and 'friendly' gestures were often weapons of conquest.\n\nYou're sent back — but carry this knowledge forward.",
+      "lesson": "The colonization of the Americas resulted in the deaths of an estimated 56 million indigenous people — 90% of the pre-contact population. This is now recognized by historians as a genocide. The peoples who survived did so through resilience, resistance, and adaptation. Their descendants continue these nations today.",
+      "next": "contact_choice",
+      "retry": true
+    },
+    {
+      "id": "observe_europeans",
+      "type": "narrative",
+      "background": "forest-watch",
+      "title": "Wisdom from a Distance",
+      "text": "Your nation watches, learns, and makes informed decisions. You trade carefully — metal tools are genuinely useful — while limiting contact that could bring disease. When missionaries arrive, your elders engage in respectful but firm dialogue about sovereignty.\n\n'We do not need saving,' Elder Sky Woman tells the priest. 'Our ways have sustained us for fifteen thousand years. Yours have existed for fifteen hundred. We will learn what is useful from you. But our spirit, our law, our land — these are not for trade.'\n\nYour nation survives longer — and stronger — than those who opened fully.",
+      "statChange": { "health": 10 },
+      "next": "chapter_end"
+    },
+    {
+      "id": "alliance_resist",
+      "type": "narrative",
+      "background": "grand-alliance",
+      "title": "Unity as Survival",
+      "text": "The alliance you helped forge connects dozens of nations. When European pressure increases, there is organized response: diplomatic negotiation, strategic trade, and when necessary, resistance.\n\nThis mirrors historical reality: nations that maintained strong confederacies — the Haudenosaunee, the Creek Confederacy, later the movements of Tecumseh — survived and negotiated from positions of relative strength far longer than isolated nations.\n\nUnity was — and remains — the most powerful tool of indigenous survival.",
+      "statChange": { "money": -5, "health": 15 },
+      "next": "chapter_end"
+    },
+    {
+      "id": "chapter_end",
+      "type": "summary",
+      "background": "sunset-plains",
+      "title": "Chapter Complete: Voices of the First Nations",
+      "summary": "You've walked ancient trade routes, sat in democratic councils predating the US Constitution, and faced the existential challenge of European contact. You've seen that the Americas were not an 'empty land' waiting for 'discovery' — they were home to sophisticated, vibrant civilizations.",
+      "lessons": [
+        "Pre-Columbian Americas were home to millions of people with sophisticated cultures, governments, trade networks, and sciences.",
+        "The Haudenosaunee Great Law of Peace directly influenced democratic ideas in the US Constitution.",
+        "Colonization was not inevitable 'progress' — it was a choice made by European powers that resulted in the greatest demographic catastrophe in human history.",
+        "Indigenous peoples were not passive victims. They resisted, adapted, negotiated, and survive to this day.",
+        "The 'Three Sisters' agricultural system and Cahokia show the sophistication of indigenous civilization."
+      ],
+      "keyTerms": ["Haudenosaunee", "Great Law of Peace", "Three Sisters", "Cahokia", "pochteca", "wampum", "sachem"],
+      "quiz": [
+        { "q": "What were the 'Three Sisters'?", "options": ["Three Aztec goddesses", "Corn, beans, and squash planted together for mutual benefit", "Three trade routes", "Three Iroquois clan mothers"], "answer": 1 },
+        { "q": "What made Cahokia remarkable?", "options": ["It was the first city to use writing", "It was larger than London at the same time period", "It had the first democracy", "It traded with Europe"], "answer": 1 },
+        { "q": "The Haudenosaunee Great Law of Peace was significant because:", "options": ["It was the first written law code", "It was a democratic constitution centuries before European equivalents, possibly influencing the US Constitution", "It united all Native American nations", "It established trade with Asia"], "answer": 1 }
+      ]
+    }
+  ]
+}

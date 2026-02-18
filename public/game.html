@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChronoQuest — Playing</title>
+  <link rel="stylesheet" href="/src/css/main.css" />
+  <link rel="stylesheet" href="/src/css/game.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+</head>
+<body class="game-page" id="gameBody">
+  <!-- Top HUD -->
+  <header class="game-hud">
+    <div class="hud-left">
+      <a href="/" class="hud-back">← ChronoQuest</a>
+      <div class="hud-chapter" id="hudChapter">Loading...</div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat-item health">
+        <span class="stat-icon">❤️</span>
+        <div class="stat-bar-wrap">
+          <div class="stat-bar" id="healthBar"></div>
+        </div>
+        <span class="stat-val" id="healthVal">100</span>
+      </div>
+      <div class="stat-item money">
+        <span class="stat-icon">💰</span>
+        <span class="stat-val" id="moneyVal">0</span>
+        <span class="stat-unit" id="currencyUnit">coins</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <button class="hud-btn" id="inventoryBtn" title="Inventory">🎒</button>
+      <button class="hud-btn" id="glossaryBtn" title="Glossary">📚</button>
+      <button class="hud-btn" id="mapBtn" title="Map">🗺️</button>
+    </div>
+  </header>
+
+  <!-- Main Game Area -->
+  <main class="game-main">
+    <!-- Background Scene -->
+    <div class="scene-bg" id="sceneBg">
+      <div class="scene-overlay"></div>
+      <div class="scene-emoji" id="sceneEmoji"></div>
+    </div>
+
+    <!-- Game Content -->
+    <div class="game-content" id="gameContent">
+      <!-- Scene Title -->
+      <div class="scene-header">
+        <div class="scene-era-badge" id="sceneEra"></div>
+        <h2 class="scene-title" id="sceneTitle"></h2>
+      </div>
+
+      <!-- Narrative Text -->
+      <div class="narrative-box glass" id="narrativeBox">
+        <div class="narrative-text" id="narrativeText"></div>
+      </div>
+
+      <!-- NPC Dialogue -->
+      <div class="npc-dialogue" id="npcDialogue" style="display:none">
+        <div class="npc-header">
+          <span class="npc-avatar" id="npcAvatar"></span>
+          <span class="npc-name" id="npcName"></span>
+          <button class="talk-to-npc" id="talkToNpc" title="Chat with NPC">💬 Ask something</button>
+        </div>
+        <div class="npc-speech" id="npcSpeech"></div>
+      </div>
+
+      <!-- Educational Term Pop-up -->
+      <div class="edu-popup" id="eduPopup" style="display:none">
+        <div class="edu-header">
+          <span class="edu-icon">📖</span>
+          <span class="edu-term" id="eduTerm"></span>
+          <button class="edu-close" id="eduClose">✕</button>
+        </div>
+        <div class="edu-body" id="eduBody"></div>
+      </div>
+
+      <!-- Choice Area -->
+      <div class="choices-area" id="choicesArea" style="display:none">
+        <div class="choices-prompt">What do you do?</div>
+        <div class="choices-grid" id="choicesGrid"></div>
+      </div>
+
+      <!-- Rest Options -->
+      <div class="rest-area" id="restArea" style="display:none">
+        <div class="rest-options" id="restOptions"></div>
+      </div>
+
+      <!-- Job/Minigame Area -->
+      <div class="minigame-area" id="minigameArea" style="display:none">
+        <div class="job-grid" id="jobGrid"></div>
+        <button class="btn-continue" id="continueAfterJob" style="display:none">Continue Journey →</button>
+      </div>
+
+      <!-- Quiz Area -->
+      <div class="quiz-area" id="quizArea" style="display:none">
+        <div class="quiz-title">📝 Knowledge Check</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <button class="btn-continue" id="quizNext" style="display:none">Next →</button>
+      </div>
+
+      <!-- Summary Area -->
+      <div class="summary-area" id="summaryArea" style="display:none"></div>
+
+      <!-- Setback Screen -->
+      <div class="setback-area" id="setbackArea" style="display:none">
+        <div class="setback-icon">⚠️</div>
+        <h3 class="setback-title" id="setbackTitle"></h3>
+        <div class="setback-text" id="setbackText"></div>
+        <div class="setback-lesson" id="setbackLesson"></div>
+        <button class="btn-retry" id="retryBtn">← Try Again</button>
+      </div>
+
+      <!-- Continue Button -->
+      <div class="continue-area" id="continueArea" style="display:none">
+        <button class="btn-continue" id="continueBtn">Continue →</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- AI Chat Panel -->
+  <div class="chat-panel" id="chatPanel" style="display:none">
+    <div class="chat-header">
+      <span class="chat-npc-name" id="chatNpcName">NPC</span>
+      <button class="chat-close" id="chatClose">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Ask the NPC something..." />
+      <button class="chat-send" id="chatSend">Send</button>
+    </div>
+  </div>
+
+  <!-- Inventory Panel -->
+  <div class="panel-overlay" id="inventoryPanel" style="display:none">
+    <div class="panel glass">
+      <div class="panel-header">
+        <h3>🎒 Your Inventory</h3>
+        <button class="panel-close" id="inventoryClose">✕</button>
+      </div>
+      <div class="panel-body" id="inventoryBody"></div>
+    </div>
+  </div>
+
+  <!-- Glossary Panel -->
+  <div class="panel-overlay" id="glossaryPanel" style="display:none">
+    <div class="panel glass wide-panel">
+      <div class="panel-header">
+        <h3>📚 Historical Glossary</h3>
+        <button class="panel-close" id="glossaryClose">✕</button>
+      </div>
+      <div class="glossary-search">
+        <input type="text" class="form-input" id="glossarySearch" placeholder="Search terms..." />
+      </div>
+      <div class="panel-body" id="glossaryBody"></div>
+    </div>
+  </div>
+
+  <!-- Character Select Overlay -->
+  <div class="character-select-overlay" id="characterSelect">
+    <div class="char-select-box glass">
+      <h2 class="char-title">Choose Your Character</h2>
+      <p class="char-subtitle" id="charSubtitle"></p>
+      <div class="char-options" id="charOptions"></div>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-content">
+      <div class="loading-hourglass">⏳</div>
+      <h2 class="loading-title">Travelling Through Time...</h2>
+      <div class="loading-bar-wrap">
+        <div class="loading-bar" id="loadingBar"></div>
+      </div>
+      <p class="loading-text" id="loadingText">Preparing your historical journey</p>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/src/js/game.js"></script>
+</body>
+</html>

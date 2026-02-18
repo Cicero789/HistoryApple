@@ -1,0 +1,157 @@
+{
+  "id": 3,
+  "title": "Ancient Rome: Rise and Fall",
+  "era": "Ancient Rome (100 BCE–476 CE)",
+  "region": "Mediterranean",
+  "difficulty": "Intermediate",
+  "thumbnail": "🏛️",
+  "description": "Walk the roads of the Roman Empire at its height. Navigate politics, gladiatorial arenas, and the slow collapse of the ancient world's greatest civilization.",
+  "theme": "roman",
+  "ambience": "roman",
+  "startingStats": { "health": 100, "money": 25, "currency": "denarii", "inventory": ["leather sandals", "woolen cloak", "wax tablet"] },
+  "characters": [
+    { "id": "traveler", "name": "Greek Scholar", "description": "A scholar from Athens traveling the Roman world, studying the empire that absorbed your civilization.", "avatar": "📜", "bonus": "knowledge" },
+    { "id": "local", "name": "Roman Plebeian", "description": "A commoner of Rome — not a senator or soldier, but part of the vast majority who built this empire with their hands.", "avatar": "⚒️", "bonus": "street_smart" }
+  ],
+  "glossary": ["Senate", "plebeian", "patrician", "gladiator", "Pax Romana", "aqueduct", "Republic", "Caesar", "legionnaire", "Colosseum"],
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "narrative",
+      "background": "roman-forum",
+      "title": "At the Heart of the World",
+      "text": "It is 100 CE. The Roman Empire at its peak: 60 million people across three continents, united by Roman roads, Roman law, and Roman armies. The Emperor Trajan has just expanded the empire to its greatest extent.\n\nYou enter Rome through the Via Appia — the famous Appian Way — passing the tombs of the wealthy lining the road's edges. The city ahead is staggering: one million people, marble temples, the Colosseum, multi-story apartment buildings (insulae), public baths, markets, and the constant roar of a metropolis.\n\nThis is the center of the known Western world. But cracks are already forming.",
+      "educationalTerm": "Pax Romana",
+      "educationalNote": "The **Pax Romana** ('Roman Peace') lasted from 27 BCE to 180 CE — roughly 200 years during which the Mediterranean world experienced relative stability under Roman rule. Trade flourished, roads were built, and Roman law unified diverse peoples. However, this 'peace' was enforced by military might and came at the cost of conquered peoples's freedom.",
+      "next": "forum_scene"
+    },
+    {
+      "id": "forum_scene",
+      "type": "choice",
+      "background": "roman-forum",
+      "title": "The Roman Forum",
+      "npc": { "name": "Senator Lucius Aurelius", "avatar": "🏛️" },
+      "dialogue": "Citizen! The Forum is alive with debate today. The Senate argues over grain subsidies for the poor — the populares say the people must eat, while the optimates say the treasury cannot bear it. And there is the matter of the gladiatorial games next week. The crowd demands spectacle! Which way do you lean?",
+      "educationalTerm": "Senate",
+      "educationalNote": "The **Roman Senate** was the governing body of Rome, originally composed of 300 patrician (aristocratic) families. By the imperial period, it had 600 members but had lost much power to the Emperor. The Senate represented a tension between democratic republican ideals and autocratic imperial reality — a tension Rome never fully resolved.",
+      "choices": [
+        { "text": "Support grain subsidies — the people must eat 🌾", "outcome": "grain_support", "statChange": { "money": -5, "health": 10 } },
+        { "text": "Attend the gladiatorial games for spectacle 🗡️", "outcome": "gladiator_games", "statChange": { "health": -10 } },
+        { "text": "Explore the city on your own terms 🚶", "outcome": "city_explore", "statChange": {} }
+      ]
+    },
+    {
+      "id": "grain_support",
+      "type": "narrative",
+      "background": "grain-distribution",
+      "title": "Bread and Circuses",
+      "text": "You join the line for the grain dole — the annona — at one of Rome's 290 distribution points. This is the famous 'bread and circuses' policy: the government provides grain (and entertainment) to keep the urban poor from revolting.\n\nA philosopher named Marcus notices your interest. 'Clever politics,' he says wryly. 'Give people enough to survive, entertain them enough to forget their powerlessness, and they'll cheer for the emperor who stripped their ancestors of republican rights.' He lowers his voice: 'But when the empire can no longer afford the bread or the circuses — that is when things get interesting.'",
+      "educationalTerm": "plebeian",
+      "educationalNote": "**Plebeians** were the common citizens of Rome — the vast majority of the population. Unlike patricians (the ancient aristocratic class), plebeians had less political power, though they fought for and won significant rights over centuries. The plebeian-patrician divide was one of Rome's great internal tensions.",
+      "next": "job_rome"
+    },
+    {
+      "id": "gladiator_games",
+      "type": "narrative",
+      "background": "colosseum",
+      "title": "The Colosseum — Wonder and Horror",
+      "text": "80,000 people roar around you in the Colosseum as gladiators clash below. The spectacle is overwhelming — elaborate processions, exotic animals, theatrical combat.\n\nBut a Greek woman beside you — a philosopher named Daphne — sees your discomfort. 'I know. It is designed to make violence feel heroic. Most gladiators are slaves, condemned prisoners, or desperately poor men with no other choice. The crowd cheers men who were given no choice about being here.'\n\nShe points to a gladiator who fights with exceptional skill. 'That one is Spartacus's great-grandson, they say. His ancestor led a slave revolt of 70,000 people in 73 BCE. They nearly toppled Rome. That terrified the Senate more than any foreign enemy.'",
+      "educationalTerm": "gladiator",
+      "educationalNote": "**Gladiators** were mostly enslaved people, prisoners of war, or condemned criminals. Some volunteered for the pay and fame. Gladiatorial combat served political purposes: it demonstrated Roman power over 'barbarians' (using foreign prisoners), provided spectacle to maintain social control, and gave emperors a visible way to demonstrate generosity. Most fights did NOT end in death — gladiators were expensive to train.",
+      "statChange": { "health": -10 },
+      "next": "job_rome"
+    },
+    {
+      "id": "city_explore",
+      "type": "narrative",
+      "background": "roman-streets",
+      "title": "Rome's Hidden World",
+      "text": "Wandering away from the grand monuments, you discover the real Rome: narrow streets filled with insulae (apartment buildings) where most Romans live 5-7 stories up with no running water. The ground floor is shops; uppers are increasingly crowded and dangerous.\n\nA shopkeeper, Cassia, runs a fullonica — a laundry — using, you discover with some surprise, collected urine for its ammonia. 'Don't look shocked,' she laughs. 'Urine-collectors pay us to take it. Romans waste nothing useful.' Her business is thriving. She employs six people and owns her building.\n\n'They say Rome is a man's world,' she adds, 'but most of the small businesses are run by women and freed slaves. The senators write the laws. We make the city work.'",
+      "next": "job_rome"
+    },
+    {
+      "id": "job_rome",
+      "type": "minigame",
+      "background": "roman-marketplace",
+      "title": "Earning Denarii in the Imperial City",
+      "text": "Rome's economy hums with activity. You need denarii to continue your journey. The city offers work for every skill.",
+      "jobs": [
+        { "id": "scribe", "title": "Forum Scribe 📜", "description": "Copy legal documents and letters for illiterate citizens at the Forum steps.", "pay": 12, "time": "half day", "difficulty": "medium", "historicalNote": "Roman literacy rates were higher than medieval Europe but still only 10-30%. Scribes were valuable." },
+        { "id": "bathhouse", "title": "Bathhouse Attendant 🛁", "description": "Work at the public baths — filling oil lamps, providing strigils, maintaining temperatures.", "pay": 6, "time": "full day", "difficulty": "easy", "historicalNote": "Roman public baths (thermae) were social hubs open to all classes. The largest (Baths of Caracalla) held 1,600 people simultaneously." },
+        { "id": "road_work", "title": "Road Construction Worker 🪨", "description": "Help lay the famous Roman road — layers of gravel, stone, and concrete that will last 2,000 years.", "pay": 10, "time": "full day", "difficulty": "hard", "historicalNote": "Rome built 400,000 km of roads. Their road-building technique was so advanced many Roman roads still exist today." }
+      ],
+      "next": "empire_crisis"
+    },
+    {
+      "id": "empire_crisis",
+      "type": "narrative",
+      "background": "troubled-rome",
+      "title": "The Slow Crack — 250 CE",
+      "text": "Fast forward: it is 250 CE. The empire that seemed eternal is bleeding. In the last 50 years, 26 different emperors have ruled — most assassinated. The borders are under constant pressure from Germanic tribes and the Sassanid Persian empire.\n\nThe currency has been debased: coins that were 85% silver now contain 5% silver. Inflation is making ordinary people's savings worthless. Plague (the Antonine Plague) has killed 5 million people.\n\nA philosopher — Marcus Aurelius's teachings are everywhere — wrote: 'You have power over your mind, not outside events. Realize this, and you will find strength.' But philosophy doesn't stop armies.\n\nYou are at a crossroads as the empire groans around you.",
+      "educationalTerm": "aqueduct",
+      "educationalNote": "**Roman aqueducts** were engineering masterpieces that supplied cities with fresh water through gravity alone. Rome had 11 aqueducts delivering 1 million cubic meters of water daily. When the empire fell, the aqueducts fell into disrepair, and European cities wouldn't match Roman water infrastructure for over 1,000 years. The fall of Rome wasn't just political — it was a technological collapse.",
+      "next": "fall_choice"
+    },
+    {
+      "id": "fall_choice",
+      "type": "choice",
+      "background": "late-rome",
+      "title": "Choosing Survival as Rome Falls",
+      "npc": { "name": "General Flavius Stilicho", "avatar": "⚔️" },
+      "dialogue": "The empire is fracturing. I, Stilicho — a Vandal-Roman general — am the last real power keeping Rome together. The eastern half is surviving; the western half is collapsing. Where do you place your future: with the Roman institutions that still have value, with the Germanic federates who are the real military power now, or do you head east to Constantinople where the empire survives?",
+      "choices": [
+        { "text": "Stay and defend Rome's western institutions 🏛️", "outcome": "defend_west", "statChange": { "health": -25 } },
+        { "text": "Join the Germanic foederati — they're the future ⚔️", "outcome": "join_germanic", "statChange": { "money": 15 } },
+        { "text": "Travel east to Constantinople — the empire continues there 🌅", "outcome": "go_east", "statChange": { "health": 20, "money": 10 } }
+      ]
+    },
+    {
+      "id": "defend_west",
+      "type": "setback",
+      "background": "rome-burning",
+      "title": "476 CE — The End That Wasn't Quite an End",
+      "text": "Western Rome falls in 476 CE when the Germanic chieftain Odoacer deposes the last emperor, Romulus Augustulus. But here's the fascinating truth: most Romans barely noticed at first. The administration kept running. The roads still existed. Latin was still spoken.\n\nThe 'fall' of Rome was actually a centuries-long transformation — not a single crash. Roman law became the foundation of European legal systems. Latin became French, Spanish, Italian, Portuguese, Romanian. Roman Christianity became the medieval church.\n\nYou defended something that never truly died — it just changed shape.",
+      "lesson": "The 'fall' of Rome in 476 CE was more transformation than total collapse. Roman institutions, law, language, and culture continued through the medieval period. Historians now call it a 'transformation' rather than simply a 'fall.' The Eastern Roman Empire (Byzantine) continued for another 1,000 years until 1453 CE.",
+      "next": "fall_choice",
+      "retry": false
+    },
+    {
+      "id": "join_germanic",
+      "type": "narrative",
+      "background": "germanic-camp",
+      "title": "The New Powers",
+      "text": "The Germanic foederati — Visigoths, Ostrogoths, Vandals, Franks — are not simply 'barbarian destroyers.' Many are Christian. Many admire and try to preserve Roman culture. The Visigoth king Theodoric will patronize Roman arts. The Franks will create the Holy Roman Empire.\n\nYou join a world in transition: Roman and Germanic cultures fusing into what will become medieval Europe. Your choice reflects historical reality — Roman 'fall' was a collaboration as much as a conquest.",
+      "statChange": { "money": 15 },
+      "next": "chapter_end"
+    },
+    {
+      "id": "go_east",
+      "type": "narrative",
+      "background": "constantinople",
+      "title": "Constantinople — Rome Endures",
+      "text": "Constantinople (modern Istanbul) is the NEW Rome — and it is magnificent. Founded by Constantine in 330 CE, it will remain the capital of the Roman Empire for another 1,000 years.\n\nThe Byzantine Empire preserves Roman law, Greek learning, and Christian tradition. It will protect ancient Greek texts during Europe's 'Dark Ages,' eventually transmitting them back to Europe during the Renaissance.\n\nBy going east, you've chosen survival and continuity. The 'fall' of Rome was only the fall of its western half.",
+      "statChange": { "health": 20, "money": 10 },
+      "next": "chapter_end"
+    },
+    {
+      "id": "chapter_end",
+      "type": "summary",
+      "background": "roman-sunset",
+      "title": "Chapter Complete: Rise and Fall of Rome",
+      "summary": "You've walked Roman streets, debated in the Forum, witnessed gladiatorial spectacle, and survived the empire's slow transformation. Rome's legacy — in law, language, architecture, and government — surrounds us today.",
+      "lessons": [
+        "The Roman Empire was built on both impressive engineering and brutal exploitation — both are true simultaneously.",
+        "Rome's 'fall' was actually a centuries-long transformation. Roman culture never truly disappeared.",
+        "The 'bread and circuses' policy shows how governments use economics and entertainment to maintain power.",
+        "Germanic peoples were not simply 'barbarians' — they absorbed and preserved Roman culture.",
+        "The Eastern Roman (Byzantine) Empire survived until 1453 — over 1,000 years after the 'fall' of the West."
+      ],
+      "keyTerms": ["Pax Romana", "Senate", "plebeian", "gladiator", "aqueduct", "Byzantine", "foederati", "denarius"],
+      "quiz": [
+        { "q": "What does 'Pax Romana' mean and when did it occur?", "options": ["Roman War, 100-300 CE", "Roman Peace, roughly 27 BCE to 180 CE", "Roman Republic, 509-27 BCE", "Roman Empire, 27 BCE to 476 CE"], "answer": 1 },
+        { "q": "What happened to the Eastern Roman Empire after 476 CE?", "options": ["It also fell immediately", "It continued as the Byzantine Empire for another 1,000 years", "It became the Ottoman Empire", "It merged with the Germanic kingdoms"], "answer": 1 },
+        { "q": "The 'bread and circuses' policy was designed to:", "options": ["Feed Rome's armies", "Export Roman culture", "Keep urban poor content and prevent revolt through food and entertainment", "Train gladiators"], "answer": 2 }
+      ]
+    }
+  ]
+}

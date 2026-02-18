@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChronoQuest — Live History</title>
+  <link rel="stylesheet" href="/src/css/main.css" />
+  <link rel="stylesheet" href="/src/css/home.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+</head>
+<body class="home-page">
+  <!-- Animated particles background -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Navigation -->
+  <nav class="main-nav glass">
+    <div class="nav-brand">
+      <span class="logo-icon">⏳</span>
+      <span class="logo-text">ChronoQuest</span>
+    </div>
+    <div class="nav-links">
+      <a href="#chapters" class="nav-link">Chapters</a>
+      <a href="#how-to-play" class="nav-link">How to Play</a>
+      <a href="/admin.html" class="nav-link">Admin</a>
+      <button class="btn-primary" id="loginBtn">Play Now</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Educational RPG</div>
+      <h1 class="hero-title">
+        <span class="title-line">Live Through</span>
+        <span class="title-line title-accent">History</span>
+      </h1>
+      <p class="hero-subtitle">
+        Step into historical worlds. Make real decisions. Discover how the past shapes today.
+        Not just facts — lived experience.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-pill">🏯 Feudal Japan</div>
+        <div class="stat-pill">🦅 Pre-Columbian Americas</div>
+        <div class="stat-pill">🏛️ Ancient Rome</div>
+        <div class="stat-pill">+ More Coming</div>
+      </div>
+      <div class="hero-cta">
+        <a href="#chapters" class="btn-hero">Begin Your Journey →</a>
+        <a href="#how-to-play" class="btn-ghost">How It Works</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="floating-card card-japan">
+        <span class="card-icon">⛩️</span>
+        <span>Feudal Japan</span>
+        <span class="card-era">1603 CE</span>
+      </div>
+      <div class="floating-card card-americas">
+        <span class="card-icon">🦅</span>
+        <span>First Nations</span>
+        <span class="card-era">1200 CE</span>
+      </div>
+      <div class="floating-card card-rome">
+        <span class="card-icon">🏛️</span>
+        <span>Ancient Rome</span>
+        <span class="card-era">100 CE</span>
+      </div>
+      <div class="globe-ring"></div>
+    </div>
+  </section>
+
+  <!-- How to Play -->
+  <section id="how-to-play" class="how-section">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-icon">📚</div>
+          <h3>Choose a Chapter</h3>
+          <p>Select a historical period that matches your studies. Each chapter is self-contained — jump in anywhere.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-icon">🎭</div>
+          <h3>Pick Your Character</h3>
+          <p>Play as a local indigenous person or a traveler passing through. Your perspective shapes what you experience.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-icon">🗺️</div>
+          <h3>Explore & Decide</h3>
+          <p>Travel, earn money through era-accurate jobs, talk to historical figures, and face real moral dilemmas.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">04</div>
+          <div class="step-icon">📖</div>
+          <h3>Learn & Reflect</h3>
+          <p>Every choice connects to real history. Even 'wrong' choices teach — history is about consequences.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chapter Selection -->
+  <section id="chapters" class="chapters-section">
+    <div class="container">
+      <h2 class="section-title">Choose Your Era</h2>
+      <p class="section-sub">Each chapter is a self-contained historical journey. You can start any chapter without playing others first.</p>
+      <div class="chapters-grid" id="chaptersGrid">
+        <div class="loading-chapters">
+          <div class="spinner"></div>
+          <p>Loading historical chapters...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section">
+    <div class="container">
+      <h2 class="section-title">Built for Learning</h2>
+      <div class="features-grid">
+        <div class="feature-item">
+          <span class="feature-icon">🤖</span>
+          <h3>AI-Powered NPCs</h3>
+          <p>Converse with historically-inspired characters. AI generates authentic dialogue rooted in historical accuracy.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">⚖️</span>
+          <h3>Real Consequences</h3>
+          <p>Wrong choices lead to setbacks, not game-overs. History teaches through consequences — so does ChronoQuest.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🌍</span>
+          <h3>Cultural Sensitivity</h3>
+          <p>Indigenous perspectives centered. The game roots for underdogs and presents history's complexity honestly.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">💼</span>
+          <h3>Era-Accurate Economy</h3>
+          <p>Earn money through real historical jobs. Manage resources. Experience what daily life actually cost.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📝</span>
+          <h3>Glossary & Quizzes</h3>
+          <p>Key terms explained in context. End-of-chapter quizzes reinforce learning without feeling like a test.</p>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🎓</span>
+          <h3>Teacher Admin Panel</h3>
+          <p>Teachers can add new chapters by uploading textbook text. The system auto-generates game content.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-brand">
+        <span class="logo-icon">⏳</span>
+        <span class="logo-text">ChronoQuest</span>
+      </div>
+      <p class="footer-tagline">History isn't just facts and dates — it's decisions that still echo today.</p>
+      <div class="footer-links">
+        <a href="/admin.html">Teacher Admin</a>
+        <a href="#chapters">Chapters</a>
+        <a href="#how-to-play">How to Play</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay" id="loginModal" style="display:none">
+    <div class="modal glass">
+      <button class="modal-close" id="closeLogin">✕</button>
+      <h2>Enter ChronoQuest</h2>
+      <p>Save your progress across sessions</p>
+      <div class="modal-form">
+        <input type="text" class="form-input" id="playerName" placeholder="Your name (e.g., Alex)" />
+        <button class="btn-primary full-width" id="startGameBtn">Start Adventure</button>
+        <p class="modal-note">No account needed — progress saves in your session.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/src/js/home.js"></script>
+</body>
+</html>

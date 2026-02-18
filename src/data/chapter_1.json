@@ -1,0 +1,210 @@
+{
+  "id": 1,
+  "title": "Feudal Japan: Shadows of the Shogun",
+  "era": "Feudal Japan (1185–1868)",
+  "region": "Japan",
+  "difficulty": "Beginner",
+  "thumbnail": "⛩️",
+  "description": "Navigate the rigid hierarchy of feudal Japan. Will you serve the shogun, join the peasants, or carve your own path as a ronin?",
+  "theme": "sepia",
+  "ambience": "japanese",
+  "startingStats": { "health": 100, "money": 15, "currency": "mon", "inventory": ["rice pouch", "sandals", "writing brush"] },
+  "characters": [
+    { "id": "traveler", "name": "Foreign Merchant", "description": "A silk road traveler from distant lands, observing Japanese society with curious eyes.", "avatar": "🧳", "bonus": "diplomatic" },
+    { "id": "local", "name": "Peasant Farmer", "description": "Born into the farming class, you dream of more yet know your place in the rigid hierarchy.", "avatar": "🌾", "bonus": "survival" }
+  ],
+  "glossary": ["shogun", "daimyo", "samurai", "ronin", "feudalism", "Bushido", "rice paddy", "Edo period", "Meiji Restoration", "Tokugawa"],
+  "scenes": [
+    {
+      "id": "intro",
+      "type": "narrative",
+      "background": "dawn-village",
+      "title": "Dawn at Edo's Gates",
+      "text": "The year is 1603. The Tokugawa shogunate has just seized control of Japan, ending decades of bloody civil war. You stand at the gates of Edo — a city that will one day become Tokyo — as the morning mist rises from the rice paddies. The rigid social hierarchy of feudal Japan is everywhere: samurai patrol the streets, merchants bow their heads, and peasants carry heavy loads.\n\nA samurai guard eyes you suspiciously as you approach the gate.",
+      "image": "⛩️",
+      "next": "gate_encounter"
+    },
+    {
+      "id": "gate_encounter",
+      "type": "choice",
+      "background": "stone-gate",
+      "title": "The Gate Guard",
+      "npc": { "name": "Samurai Guard Kenji", "avatar": "⚔️" },
+      "dialogue": "Halt, traveller! State your purpose in Edo. The shogun does not welcome wanderers without purpose. Are you merchant, monk, or miscreant?",
+      "educationalTerm": "shogun",
+      "educationalNote": "The **Shogun** was the military dictator of Japan. Though emperors still existed, the Shogun held actual power. The word means 'commander of a force.' Tokugawa Ieyasu established the longest-running shogunate (1603–1868), bringing stability but also strict social control.",
+      "choices": [
+        { "text": "Bow respectfully and offer a gift of silk 🎁", "outcome": "gate_pass_gift", "statChange": { "money": -3 }, "hint": "Diplomacy first..." },
+        { "text": "Present forged travel papers and bluff 📜", "outcome": "gate_fail_bluff", "statChange": { "health": -15 }, "hint": "Is this wise?" },
+        { "text": "Ask a passing monk to vouch for you 🙏", "outcome": "gate_pass_monk", "statChange": {}, "hint": "Monks are respected..." }
+      ]
+    },
+    {
+      "id": "gate_pass_gift",
+      "type": "narrative",
+      "background": "market-street",
+      "title": "A Smooth Entrance",
+      "text": "The guard's stern face softens slightly as he accepts the silk. 'A wise gesture,' he murmurs. 'Know your place in Edo and you will prosper. Forget it, and...' He lets the threat hang in the air like incense smoke.\n\nYou enter the city. The streets are a maze of wooden buildings, street vendors selling rice dumplings, and the constant clip-clop of geta sandals on stone paths. A friendly merchant notices your confused expression.",
+      "npc": { "name": "Merchant Tanaka", "avatar": "🏮" },
+      "npcDialogue": "You look lost, friend! This city operates by clear rules — the samurai at the top, then farmers who grow our food, then craftsmen, then merchants like me at the bottom. Ironic that I have the most coins, yes? Come, let me show you around. But first — you need work!",
+      "next": "job_search"
+    },
+    {
+      "id": "gate_fail_bluff",
+      "type": "setback",
+      "background": "prison-cell",
+      "title": "Caught! A Lesson in Humility",
+      "text": "The guard sees through your forgery immediately. 'Fraudulent papers! You insult the shogun's authority!' He strikes you with the butt of his spear before other guards drag you to a holding cell.\n\nAfter several painful hours, a Buddhist monk negotiates your release. 'Deception is a path to suffering,' he says gently. 'In feudal Japan, the social order is enforced strictly. Always show respect to those above you — or find clever, honest ways around them.'",
+      "lesson": "In the Tokugawa feudal system, the four-tier class structure (samurai, farmer, artisan, merchant) was rigidly enforced. Attempting to deceive authorities could result in severe punishment. Knowing the system is the first step to navigating it.",
+      "next": "gate_encounter",
+      "retry": true
+    },
+    {
+      "id": "gate_pass_monk",
+      "type": "narrative",
+      "background": "temple-path",
+      "title": "Blessed Passage",
+      "text": "The monk, Brother Jiro, speaks softly to the guard. 'This traveller seeks wisdom and peace. Let them pass.' The guard nods — Buddhist monks command deep respect in this era.\n\nBrother Jiro walks with you into the city. 'Remember,' he says, 'in this land, your station defines your life. But wisdom crosses all boundaries. Ask questions, listen carefully, and you may learn much here.'",
+      "next": "job_search"
+    },
+    {
+      "id": "job_search",
+      "type": "minigame",
+      "background": "marketplace",
+      "title": "Earning Your Keep",
+      "text": "You need money to survive in Edo. The city offers several ways to earn honest coin. Your current funds: {{money}} mon. A night at the inn costs 8 mon. A bowl of rice is 2 mon.",
+      "educationalTerm": "rice paddy",
+      "educationalNote": "**Rice** was the backbone of Japan's feudal economy. Taxes were paid in rice, samurai were paid in rice stipends, and land value was measured in koku (the amount of rice needed to feed one person for a year). Knowing how to farm or handle rice was essential knowledge.",
+      "jobs": [
+        { "id": "rice_work", "title": "Rice Paddy Work 🌾", "description": "Help farmers transplant seedlings in flooded paddies. Backbreaking but honest.", "pay": 6, "time": "full day", "difficulty": "hard", "historicalNote": "Rice farming was the most common occupation in feudal Japan, employing over 80% of the population." },
+        { "id": "calligraphy", "title": "Calligraphy Copying 📜", "description": "Help a scholar copy official documents. Requires literacy.", "pay": 10, "time": "half day", "difficulty": "medium", "historicalNote": "Literacy was valued but uncommon. Scholars and monks often earned income copying texts." },
+        { "id": "porter", "title": "Palanquin Porter 🪑", "description": "Carry wealthy citizens through the city in a palanquin chair. Heavy work.", "pay": 4, "time": "half day", "difficulty": "easy", "historicalNote": "Palanquins (kago) were the primary way wealthy people traveled through Japanese cities since wheeled vehicles were rare." }
+      ],
+      "next": "post_work"
+    },
+    {
+      "id": "post_work",
+      "type": "choice",
+      "background": "evening-edo",
+      "title": "Evening in Edo — A Choice Approaches",
+      "text": "With some coin in your purse, the city comes alive at dusk. Paper lanterns glow along the streets. You overhear urgent whispers: a group of ronin (masterless samurai) are planning something — some say robbery, others say resistance against an unjust daimyo.",
+      "educationalTerm": "ronin",
+      "educationalNote": "A **Ronin** was a samurai without a lord (daimyo). When their master died or they were dismissed, samurai became ronin — wanderers without purpose in a society that defined identity through loyalty. The famous 47 Ronin avenged their master in 1703, becoming legends of loyalty and sacrifice.",
+      "npc": { "name": "Ronin Leader Hiroshi", "avatar": "⚔️" },
+      "dialogue": "Traveller, you seem capable. Our daimyo Lord Matsuda has been unjustly stripped of his lands by the Tokugawa government. We plan to reclaim what is rightfully his. Will you join us, report us to the authorities, or simply walk away?",
+      "choices": [
+        { "text": "Join the ronin's cause for justice ⚔️", "outcome": "ronin_fight", "statChange": { "health": -20 }, "hint": "Risky but honorable..." },
+        { "text": "Report them to the shogun's guards 🚨", "outcome": "ronin_report", "statChange": { "money": 15 }, "hint": "Safe, but is it right?" },
+        { "text": "Quietly slip away — this isn't your fight 🌙", "outcome": "ronin_avoid", "statChange": {}, "hint": "Wisdom or cowardice?" }
+      ]
+    },
+    {
+      "id": "ronin_fight",
+      "type": "narrative",
+      "background": "night-battle",
+      "title": "The Ronin's Gambit",
+      "text": "You join the 47... well, 12 ronin in a daring raid on the local magistrate who wrongfully dispossessed their lord. It is chaotic, dangerous, and ultimately unsuccessful — the Tokugawa forces are too numerous.\n\nYou escape with a sword wound but also with something priceless: the respect of people fighting against an unjust system. The ronin scatter to fight another day.\n\n'History remembers those who stood for something,' Hiroshi says as you part ways, binding your wound with cloth.",
+      "lesson": "The famous 47 Ronin incident (1703) showed that even in a rigid system, people resisted injustice. Their story became Japan's most celebrated tale of loyalty and sacrifice. The Tokugawa period's strict hierarchy created both order AND resistance.",
+      "statChange": { "health": -20 },
+      "next": "temple_rest"
+    },
+    {
+      "id": "ronin_report",
+      "type": "setback",
+      "background": "magistrate-office",
+      "title": "The Price of Easy Money",
+      "text": "You collect the reward — 15 mon — but as the ronin are arrested, you see the faces of their families watching in despair. A child no older than eight grabs your sleeve. 'Why?' she asks simply.\n\nMerchant Tanaka finds you later. 'You took the shogun's coin against men fighting for justice. In this game — and in history — we ask you to consider: whose side are you truly on? The powerful always offer rewards for betrayal. The question is whether you can live with the answer.'\n\nYour money increased, but your reputation in this district is now... complicated.",
+      "lesson": "The Tokugawa shogunate maintained power through informants and strict control. While it brought peace, it also suppressed legitimate grievances. History asks us to think critically about when loyalty to authority conflicts with justice.",
+      "next": "temple_rest"
+    },
+    {
+      "id": "ronin_avoid",
+      "type": "narrative",
+      "background": "quiet-alley",
+      "title": "The Wisdom of Observation",
+      "text": "You slip away into the night, watching from a rooftop as the ronin make their move and the guards respond. You see both sides: the desperation of men stripped of their identity and livelihood, and the cold efficiency of a state maintaining order.\n\nBrother Jiro appears beside you on the rooftop as if from nowhere. 'You chose to witness rather than act. Sometimes that is the wisest path. Now you understand both sides — and understanding, young traveller, is the beginning of wisdom.'",
+      "next": "temple_rest"
+    },
+    {
+      "id": "temple_rest",
+      "type": "rest",
+      "background": "zen-temple",
+      "title": "Night's Rest",
+      "text": "The day has been long. You have options for rest:",
+      "restOptions": [
+        { "id": "temple", "title": "Sleep at the Buddhist Temple 🛕", "description": "Free. Hard floor, incense, peace.", "healthRestore": 10, "cost": 0, "historicalNote": "Buddhist temples often provided free lodging to travelers in feudal Japan." },
+        { "id": "inn", "title": "Stay at the Inn (Ryokan) 🏮", "description": "8 mon. Futon, hot meal, bath.", "healthRestore": 30, "cost": 8, "historicalNote": "Ryokan inns were common along the Tokaido road. They offered meals, baths, and entertainment." },
+        { "id": "stars", "title": "Sleep Under the Stars 🌙", "description": "Free. Under a pine tree near the city walls.", "healthRestore": 5, "cost": 0 }
+      ],
+      "next": "meiji_approach"
+    },
+    {
+      "id": "meiji_approach",
+      "type": "narrative",
+      "background": "harbor-dawn",
+      "title": "Foreign Ships on the Horizon",
+      "text": "Fast forward: it is 1853. American Commodore Perry's 'Black Ships' have arrived in Edo Bay, demanding Japan open its ports to trade. The Tokugawa shogunate — which had kept Japan isolated for 200 years — is in crisis.\n\nYou stand at the harbor alongside everyone from fishermen to samurai, all staring at the steam-powered warships with awe and terror. This moment will change Japan forever — leading to the Meiji Restoration, the end of the shogunate, and Japan's transformation into a modern nation.",
+      "educationalTerm": "Meiji Restoration",
+      "educationalNote": "The **Meiji Restoration** (1868) was one of history's most dramatic transformations. Japan went from feudal isolation to a modern industrial nation in just decades. The emperor was restored to power, samurai class was abolished, and Japan rapidly adopted Western technology — all to avoid being colonized like China had been.",
+      "next": "final_choice"
+    },
+    {
+      "id": "final_choice",
+      "type": "choice",
+      "background": "harbor-ships",
+      "title": "The Crossroads of History",
+      "npc": { "name": "Young Samurai Kenji", "avatar": "🗡️" },
+      "dialogue": "These foreign ships are either our doom or our salvation. My father says we must repel them by force — Japan's ways are sacred! But I have read of their technology... What do you say, traveller? Isolate and fight? Or open and adapt?",
+      "choices": [
+        { "text": "Fight! Japan must resist foreign influence! 🗡️", "outcome": "fight_foreign", "statChange": { "health": -30 }, "isTrap": true },
+        { "text": "Japan must modernize to survive — open the ports 🚢", "outcome": "modernize", "statChange": { "money": 10 } },
+        { "text": "Learn from both sides and seek compromise 🤝", "outcome": "compromise", "statChange": { "health": 10 } }
+      ]
+    },
+    {
+      "id": "fight_foreign",
+      "type": "setback",
+      "background": "cannon-fire",
+      "title": "The Limits of Swords Against Cannons",
+      "text": "⚠️ HISTORY CHECK! You chose to fight — and history shows this was the path of those who lost!\n\nThe samurai who resisted Perry's cannons with traditional swords discovered a brutal truth: however noble, ancient weapons cannot match modern firepower. Japan's isolated military was outmatched.\n\nThose who continued to resist the Meiji Restoration — the Satsuma Rebellion of 1877 — were ultimately crushed. The lesson? Resistance to change, however principled, must be strategic.\n\nYou're sent back — but you've learned something real.",
+      "lesson": "Japan's Meiji Restoration is one of history's great lessons in adaptive resilience. Rather than being colonized (like many Asian nations), Japan chose to modernize on its own terms. By 1905, Japan defeated Russia — a European power — in war. Understanding WHEN to adapt is as important as knowing your values.",
+      "next": "final_choice",
+      "retry": true
+    },
+    {
+      "id": "modernize",
+      "type": "narrative",
+      "background": "modern-japan-dawn",
+      "title": "The Dawn of a New Japan",
+      "text": "The Meiji era begins. You witness the extraordinary: samurai exchanging swords for Western suits, ancient temples beside new railways, young students learning English and German alongside classical Chinese. Japan is remaking itself.\n\nYou helped carry the message: adapt or be overtaken. The young samurai Kenji becomes a Meiji government official, bridging old Japan and new. 'You showed me,' he says years later, 'that strength is knowing when to hold a sword — and when to pick up a pen.'",
+      "next": "chapter_end"
+    },
+    {
+      "id": "compromise",
+      "type": "narrative",
+      "background": "negotiation-hall",
+      "title": "The Middle Path",
+      "text": "Your compromise approach mirrors what Japan's moderate leaders actually did: they opened selectively — taking Western technology but maintaining cultural identity. 'Wakon Yosai' — Japanese spirit, Western knowledge — became the Meiji motto.\n\nThis balance is what made Japan unique: not simply copying the West, but curating it. You've understood one of history's most nuanced lessons.",
+      "next": "chapter_end"
+    },
+    {
+      "id": "chapter_end",
+      "type": "summary",
+      "background": "sunset-fuji",
+      "title": "Chapter Complete: Shadows of the Shogun",
+      "summary": "You've journeyed through feudal Japan — from the rigid Tokugawa hierarchy to the dramatic Meiji Restoration. You encountered samurai codes, rice-based economies, masterless ronin, and the shock of Western contact.",
+      "lessons": [
+        "Japan's feudal system was rigid but complex — those at the bottom (farmers) were valued for feeding society, even if controlled.",
+        "The Tokugawa period (200+ years of peace) came at the cost of isolation and suppressed change.",
+        "The Meiji Restoration shows that strategic adaptation — not blind resistance — can preserve a culture while building strength.",
+        "History's 'obvious' choices are often traps. The ronin who fought for honor, the leaders who chose modernization — both took risks."
+      ],
+      "keyTerms": ["shogun", "daimyo", "samurai", "ronin", "Tokugawa", "Meiji Restoration", "Bushido", "koku"],
+      "quiz": [
+        { "q": "What does 'Shogun' mean?", "options": ["Emperor of Japan", "Military commander/dictator", "Buddhist monk", "Rice farmer"], "answer": 1 },
+        { "q": "Why were ronin considered tragic figures?", "options": ["They were too poor", "They lost their master and thus their identity in samurai society", "They refused to fight", "They converted to Buddhism"], "answer": 1 },
+        { "q": "What was the Meiji Restoration?", "options": ["A Buddhist revival", "Japan's return to ancient customs", "Japan's rapid modernization after opening to the West", "A military coup against foreign traders"], "answer": 2 }
+      ]
+    }
+  ]
+}
