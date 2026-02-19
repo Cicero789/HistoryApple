@@ -196,6 +196,10 @@
   bottom: 10%; right: 10%;
   animation: float 4s ease-in-out infinite 2s;
 }
+.card-geography {
+  top: 10%; right: 8%;
+  animation: float 4s ease-in-out infinite 1.5s;
+}
 
 /* How to Play Section */
 .how-section {

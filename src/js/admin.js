@@ -347,7 +347,166 @@ document.getElementById('addTermBtn')?.addEventListener('click', async () => {
   document.getElementById('newTermDef').value = '';
 });
 
+// ─── Load Image Stats ──────────────────────────────────────────────
+async function loadImageStats() {
+  try {
+    const res  = await fetch('/api/images/stats');
+    const data = await res.json();
+    const imgTotal   = document.getElementById('imgTotal');
+    const convoTotal = document.getElementById('convoTotal');
+    if (imgTotal)   imgTotal.textContent   = data.total_images;
+    if (convoTotal) convoTotal.textContent = data.total_convos;
+
+    // Update overview stat for images
+    const totalImgsEl = document.getElementById('totalChapters');
+
+    // Load recent images into grid
+    const grid = document.getElementById('recentImagesGrid');
+    if (!grid) return;
+    const imgsRes = await fetch('/api/images');
+    const images  = await imgsRes.json();
+    const recent  = images.slice(0, 12);
+
+    if (!recent.length) {
+      grid.innerHTML = '<p style="opacity:0.5;grid-column:1/-1">No images generated yet. Play a chapter to see AI-generated scenes here.</p>';
+      return;
+    }
+
+    grid.innerHTML = recent.map(img => `
+      <div style="border-radius:10px;overflow:hidden;border:1px solid rgba(212,168,67,0.15);cursor:pointer"
+           onclick="window.open('${img.public_url}','_blank')">
+        <img src="${img.public_url}" alt=""
+             style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:rgba(255,255,255,0.03)"
+             onerror="this.style.display='none'" />
+        <div style="padding:8px 10px;font-size:0.75rem;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${img.prompt.slice(0, 50)}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('Image stats error:', e); }
+}
+
+// ─── Textbook AI Parser ────────────────────────────────────────
+const parseBtn    = document.getElementById('parseTextbookBtn');
+const parseInput  = document.getElementById('textbookInput');
+const parseResult = document.getElementById('parseResult');
+const parseEra    = document.getElementById('parseEra');
+
+if (parseBtn) {
+  parseBtn.addEventListener('click', async () => {
+    const text = parseInput?.value?.trim();
+    const era  = parseEra?.value || '';
+    if (!text) { alert('Paste a textbook excerpt first (up to 2000 words).'); return; }
+
+    parseBtn.disabled = true;
+    parseBtn.textContent = '⏳ Analysing with Grok AI...';
+    if (parseResult) parseResult.innerHTML = '<p style="opacity:0.5;font-style:italic">Grok AI is reading the text...</p>';
+
+    try {
+      const res = await fetch('/api/admin/parse-textbook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, era })
+      });
+      const data = await res.json();
+
+      if (!data.success) throw new Error(data.error || 'Parse failed');
+      const p = data.parsed || {};
+
+      let html = `<div style="font-size:0.82rem;color:rgba(201,168,76,0.6);margin-bottom:1rem">Model: ${data.model || 'grok-3-fast'}</div>`;
+
+      if (p.narrative_hook) {
+        html += `<div class="parse-section"><h4>📖 Narrative Hook</h4><p>${p.narrative_hook}</p></div>`;
+      }
+
+      if (p.key_events?.length) {
+        html += `<div class="parse-section"><h4>📅 Key Events</h4><ul>`;
+        p.key_events.forEach(e => {
+          html += `<li><strong>${e.date || ''}</strong> — ${e.event || e}: <em>${e.significance || ''}</em></li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (p.key_terms?.length) {
+        html += `<div class="parse-section"><h4>📚 Key Terms</h4><dl>`;
+        p.key_terms.forEach(t => {
+          html += `<dt>${typeof t === 'string' ? t : t.term}</dt><dd>${typeof t === 'string' ? '' : (t.definition || '')}</dd>`;
+        });
+        html += '</dl></div>';
+      }
+
+      if (p.key_figures?.length) {
+        html += `<div class="parse-section"><h4>👤 Key Figures</h4><ul>`;
+        p.key_figures.forEach(f => {
+          html += `<li><strong>${f.name}</strong> (${f.role || ''}): ${f.description || ''}</li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (p.jobs?.length) {
+        html += `<div class="parse-section"><h4>⚒️ Era Jobs</h4>`;
+        p.jobs.forEach(j => {
+          html += `<div class="job-preview"><span>${j.title}</span> <span class="job-pay-preview">+${j.pay} units/day</span><p>${j.description}</p></div>`;
+        });
+        html += '</div>';
+      }
+
+      if (p.raw) {
+        html += `<div class="parse-section"><h4>Raw AI Response</h4><pre style="white-space:pre-wrap;font-size:0.85rem;opacity:0.7">${p.raw.slice(0,1000)}</pre></div>`;
+      }
+
+      if (parseResult) parseResult.innerHTML = html;
+    } catch(e) {
+      if (parseResult) parseResult.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
+    } finally {
+      parseBtn.disabled = false;
+      parseBtn.textContent = '🤖 Analyse with Grok AI';
+    }
+  });
+}
+
+// ─── Load Image Stats ──────────────────────────────────────────────
+async function loadImageStats() {
+  try {
+    const res  = await fetch('/api/images/stats');
+    const data = await res.json();
+    
+    const el1 = document.getElementById('imgTotal');
+    const el2 = document.getElementById('convoTotal');
+    const el3 = document.getElementById('workerStatus');
+    
+    if (el1) el1.textContent = data.local_images || data.total_images || 0;
+    if (el2) el2.textContent = data.local_convos  || data.total_convos  || 0;
+    if (el3) el3.textContent = data.worker_url ? `✅ ${data.worker_url}` : '⚠️ Not configured';
+
+    // Load recent images into grid
+    const grid = document.getElementById('recentImagesGrid');
+    if (!grid) return;
+    const imgsRes = await fetch('/api/images');
+    const images  = await imgsRes.json();
+    const recent  = images.slice(0, 12);
+
+    if (!recent.length) {
+      grid.innerHTML = '<p style="opacity:0.5;grid-column:1/-1">No images generated yet. Play a chapter to see AI-generated scenes here.</p>';
+      return;
+    }
+
+    grid.innerHTML = recent.map(img => `
+      <div style="border-radius:10px;overflow:hidden;border:1px solid rgba(212,168,67,0.15);cursor:pointer"
+           onclick="window.open('${img.public_url}','_blank')">
+        <img src="${img.public_url}" alt=""
+             style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:rgba(255,255,255,0.03)"
+             onerror="this.style.display='none'" />
+        <div style="padding:8px 10px;font-size:0.75rem;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${(img.prompt || '').slice(0, 50)}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { console.error('Image stats error:', e); }
+}
+
 // ─── Init ──────────────────────────────────────────────────────
 loadOverviewStats();
 loadChaptersAdmin();
 loadGlossaryAdmin();
+loadImageStats();

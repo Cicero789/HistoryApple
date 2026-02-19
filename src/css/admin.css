@@ -483,3 +483,26 @@
   .char-form-grid { grid-template-columns: 1fr; }
   .admin-stats-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Textbook Parser ─────────────────────────────────────────── */
+.parse-section {
+  background: rgba(201,168,76,0.04);
+  border: 1px solid rgba(201,168,76,0.12);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.8rem;
+}
+.parse-section h4 {
+  font-family: 'Cinzel', serif;
+  color: #c9a84c;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+.parse-section p, .parse-section li { font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.3rem; }
+.parse-section ul, .parse-section ol { padding-left: 1.4rem; }
+.parse-section dl dt { font-weight: 600; color: #c9a84c; margin-top: 0.4rem; }
+.parse-section dl dd { margin-left: 1rem; font-size: 0.9rem; opacity: 0.8; }
+.job-preview { border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; }
+.job-preview span { font-weight: 600; font-size: 0.9rem; }
+.job-pay-preview { color: #4ade80; margin-left: 0.5rem; font-size: 0.85rem; }
+.job-preview p { font-size: 0.85rem; opacity: 0.7; margin-top: 0.2rem; }

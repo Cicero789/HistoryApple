@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChronoQuest — AI Image Gallery</title>
+  <link rel="stylesheet" href="/src/css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-l: #f0d080;
+      --dark: #0d0d12; --glass: rgba(12,12,20,0.8);
+      --border: rgba(201,168,76,0.2); --text: #e8d5a3; --dim: #a09070;
+    }
+    body { background: var(--dark); color: var(--text); font-family: 'EB Garamond', serif; min-height: 100vh; }
+    
+    nav { background: rgba(5,5,10,0.95); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); }
+    nav a { color: var(--gold); text-decoration: none; font-family: 'Cinzel', serif; font-size: 0.9rem; }
+    nav .brand { font-size: 1.1rem; }
+    nav .links { display: flex; gap: 1.5rem; }
+    
+    .hero { text-align: center; padding: 4rem 2rem 2rem; }
+    .hero h1 { font-family: 'Cinzel', serif; font-size: clamp(1.8rem, 5vw, 3rem); color: var(--gold-l); text-shadow: 0 2px 20px rgba(201,168,76,0.3); margin-bottom: 0.5rem; }
+    .hero p  { color: var(--dim); max-width: 600px; margin: 0 auto 1.5rem; line-height: 1.6; }
+    
+    .stats-bar {
+      display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .stat-pill {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 20px;
+      padding: 0.4rem 1rem; font-family: 'Cinzel', serif; font-size: 0.85rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .stat-num { color: var(--gold); font-weight: 600; }
+    
+    .controls {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      max-width: 900px; margin: 0 auto 2rem; padding: 0 1rem;
+    }
+    .filter-btn {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 20px;
+      padding: 0.4rem 1rem; color: var(--text); cursor: pointer; font-size: 0.9rem;
+      transition: all 0.2s; font-family: 'Lato', sans-serif;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1);
+    }
+    
+    .generate-section {
+      max-width: 700px; margin: 0 auto 2rem;
+      background: var(--glass); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; backdrop-filter: blur(12px);
+    }
+    .generate-section h3 { font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 1rem; }
+    .gen-form { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .gen-input {
+      flex: 1; min-width: 200px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.7rem 1rem; color: var(--text); font-size: 0.95rem;
+      font-family: 'EB Garamond', serif; outline: none;
+    }
+    .gen-input:focus { border-color: var(--gold); }
+    .gen-input::placeholder { color: var(--dim); }
+    .gen-select { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.8rem; color: var(--text); font-size: 0.9rem; cursor: pointer; }
+    .gen-btn {
+      background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15));
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1.5rem;
+      color: var(--gold); cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.9rem;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .gen-btn:hover { background: rgba(201,168,76,0.4); }
+    .gen-btn:disabled { opacity: 0.5; cursor: wait; }
+    
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+    
+    .gallery-item {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; transition: all 0.3s; cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .gallery-item:hover { border-color: var(--gold); transform: scale(1.02); box-shadow: 0 8px 30px rgba(201,168,76,0.15); }
+    
+    .gallery-img-wrap { position: relative; padding-bottom: 62%; overflow: hidden; background: rgba(255,255,255,0.03); }
+    .gallery-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .gallery-item:hover .gallery-img { transform: scale(1.05); }
+    .gallery-img-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3rem; opacity: 0.2; }
+    
+    .gallery-info { padding: 0.9rem 1.1rem; }
+    .gallery-prompt { font-size: 0.9rem; color: var(--text); line-height: 1.4; margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .gallery-meta   { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+    .gallery-tag { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.15); border-radius: 12px; padding: 0.1rem 0.5rem; font-size: 0.75rem; color: var(--gold); font-family: 'Cinzel', serif; }
+    .gallery-date { font-size: 0.75rem; color: var(--dim); margin-left: auto; }
+    
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--dim); grid-column: 1/-1; }
+    .empty-state .big-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { max-width: 400px; margin: 0 auto; line-height: 1.6; }
+    
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .lightbox-inner { max-width: 900px; width: 100%; position: relative; }
+    .lightbox-img { width: 100%; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .lightbox-close { position: absolute; top: -2rem; right: 0; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .lightbox-caption { text-align: center; margin-top: 1rem; color: var(--text); font-style: italic; max-width: 700px; margin: 0.8rem auto 0; }
+    .lightbox-url { font-size: 0.75rem; color: var(--dim); margin-top: 0.4rem; word-break: break-all; text-align: center; }
+    
+    .loading-spinner {
+      text-align: center; padding: 3rem; color: var(--gold);
+      animation: spin 1s linear infinite; font-size: 2rem; grid-column: 1/-1;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .gen-status { margin-top: 0.8rem; font-size: 0.9rem; color: var(--text); min-height: 1.2rem; }
+    .gen-preview { margin-top: 1rem; border-radius: 8px; overflow: hidden; max-height: 0; transition: max-height 0.4s; }
+    .gen-preview.has-image { max-height: 400px; }
+    .gen-preview img { width: 100%; }
+    
+    @media (max-width: 600px) {
+      .hero { padding: 2rem 1rem 1rem; }
+      .gallery-grid { padding: 0 0.8rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="brand" href="/">⏳ ChronoQuest</a>
+    <div class="links">
+      <a href="/">← Back</a>
+      <a href="/admin.html">Admin</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>🎨 AI Image Gallery</h1>
+    <p>Every image generated by Grok AI during gameplay — stored permanently in Cloudflare R2, indexed in D1.</p>
+    
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-pill">🖼️ <span class="stat-num" id="statImages">0</span> Images</div>
+      <div class="stat-pill">💬 <span class="stat-num" id="statConvos">0</span> Conversations</div>
+      <div class="stat-pill">☁️ <span class="stat-num">R2</span> Cloud Storage</div>
+      <div class="stat-pill">🗄️ <span class="stat-num">D1</span> Database</div>
+    </div>
+  </div>
+
+  <!-- Generate New Image -->
+  <div class="generate-section" style="margin: 0 auto 2rem; padding: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+    <h3>🤖 Generate New Scene Image</h3>
+    <div class="gen-form">
+      <input type="text" class="gen-input" id="genPrompt" placeholder="Describe a historical scene... e.g., Samurai at the gates of Edo" />
+      <select class="gen-select" id="genEra">
+        <option value="">Any Era</option>
+        <option value="Feudal Japan 1603-1868">Feudal Japan</option>
+        <option value="Pre-Columbian Americas 900-1500 CE">Pre-Columbian Americas</option>
+        <option value="Ancient Rome 100 BCE-476 CE">Ancient Rome</option>
+      </select>
+      <button class="gen-btn" id="genBtn" onclick="generateImage()">✨ Generate</button>
+    </div>
+    <div class="gen-status" id="genStatus"></div>
+    <div class="gen-preview" id="genPreview"><img id="genPreviewImg" src="" alt="Generated" /></div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="controls">
+    <button class="filter-btn active" onclick="filterBy(null, this)">All</button>
+    <button class="filter-btn" onclick="filterBy('1', this)">⛩️ Feudal Japan</button>
+    <button class="filter-btn" onclick="filterBy('2', this)">🦅 Americas</button>
+    <button class="filter-btn" onclick="filterBy('3', this)">🏛️ Rome</button>
+  </div>
+
+  <!-- Gallery Grid -->
+  <div class="gallery-grid" id="galleryGrid">
+    <div class="loading-spinner">⏳</div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox(event)">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" onclick="document.getElementById('lightbox').style.display='none'">✕</button>
+      <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+      <p class="lightbox-caption" id="lightboxCaption"></p>
+      <p class="lightbox-url" id="lightboxUrl"></p>
+    </div>
+  </div>
+
+  <script>
+    let allImages = [];
+    let currentFilter = null;
+
+    async function loadStats() {
+      try {
+        const r = await fetch('/api/images/stats');
+        const d = await r.json();
+        document.getElementById('statImages').textContent = d.local_images || d.d1_images || 0;
+        document.getElementById('statConvos').textContent = d.local_convos || d.d1_convos || 0;
+      } catch(e) {}
+    }
+
+    async function loadGallery(chapterId = null) {
+      const url = chapterId ? `/api/images?chapter=${chapterId}` : '/api/images';
+      try {
+        const r = await fetch(url);
+        allImages = await r.json();
+        renderGallery(allImages);
+      } catch(e) {
+        document.getElementById('galleryGrid').innerHTML = '<p style="text-align:center;color:#a09070;grid-column:1/-1">Failed to load images.</p>';
+      }
+    }
+
+    function renderGallery(images) {
+      const grid = document.getElementById('galleryGrid');
+      if (!images || images.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="big-icon">🎨</div>
+            <p>No images generated yet. Start playing ChronoQuest and AI-generated scenes will appear here, stored in Cloudflare R2.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = images.map((img, i) => {
+        const date = new Date(img.created_at).toLocaleDateString();
+        const chapter = img.chapter_id ? `Chapter ${img.chapter_id}` : 'General';
+        const prompt = (img.prompt || '').replace(/Historical educational illustration.*/, '').trim();
+        const isR2  = img.public_url && img.public_url.includes('r2.dev');
+        
+        return `
+          <div class="gallery-item" onclick="openLightbox('${img.public_url}', '${escape(prompt.slice(0,200))}', '${img.public_url}')">
+            <div class="gallery-img-wrap">
+              ${img.public_url 
+                ? `<img class="gallery-img" src="${img.public_url}" alt="${prompt.slice(0,80)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />`
+                : ''}
+              <div class="gallery-img-placeholder" style="${img.public_url ? 'display:none' : ''}">🖼️</div>
+            </div>
+            <div class="gallery-info">
+              <div class="gallery-prompt">${prompt.slice(0, 150) || 'Scene image'}</div>
+              <div class="gallery-meta">
+                <span class="gallery-tag">${chapter}</span>
+                ${isR2 ? '<span class="gallery-tag">☁️ R2</span>' : ''}
+                <span class="gallery-date">${date}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterBy(chapterId, btn) {
+      currentFilter = chapterId;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadGallery(chapterId);
+    }
+
+    function openLightbox(url, caption, fullUrl) {
+      const lb = document.getElementById('lightbox');
+      document.getElementById('lightboxImg').src = url;
+      document.getElementById('lightboxCaption').textContent = unescape(caption);
+      document.getElementById('lightboxUrl').textContent = fullUrl;
+      lb.style.display = 'flex';
+    }
+
+    function closeLightbox(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('lightbox').style.display = 'none';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.getElementById('lightbox').style.display = 'none';
+    });
+
+    async function generateImage() {
+      const prompt = document.getElementById('genPrompt').value.trim();
+      const era    = document.getElementById('genEra').value;
+      if (!prompt) { alert('Enter a scene description first.'); return; }
+
+      const btn    = document.getElementById('genBtn');
+      const status = document.getElementById('genStatus');
+      const preview = document.getElementById('genPreview');
+
+      btn.disabled = true;
+      status.textContent = '⏳ Generating with Grok AI... (this takes 15-30 seconds)';
+      preview.classList.remove('has-image');
+
+      try {
+        const r = await fetch('/api/ai/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, era, region: era.includes('Japan') ? 'Japan' : era.includes('Americas') ? 'Americas' : era.includes('Rome') ? 'Mediterranean' : '' })
+        });
+        
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        
+        document.getElementById('genPreviewImg').src = data.url;
+        preview.classList.add('has-image');
+        status.textContent = data.cached 
+          ? `✅ Loaded from cache! Stored in R2: ${data.r2_key || 'yes'}` 
+          : `✅ Generated & stored in Cloudflare R2! Key: ${data.r2_key || 'stored'}`;
+        
+        // Reload gallery
+        loadGallery(currentFilter);
+        loadStats();
+      } catch(e) {
+        status.textContent = `❌ Error: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('genPrompt')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') generateImage();
+    });
+
+    // Init
+    loadStats();
+    loadGallery();
+  </script>
+</body>
+</html>
