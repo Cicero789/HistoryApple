@@ -4,3 +4,4 @@ supervisord.*
 *.pid
 *.sock
 .env
+data/*.db

@@ -31,6 +31,8 @@
         <a class="sidebar-link" data-tab="create" href="#">➕ Create Chapter</a>
         <a class="sidebar-link" data-tab="chapters" href="#">📚 Manage Chapters</a>
         <a class="sidebar-link" data-tab="glossary" href="#">📖 Glossary</a>
+        <a class="sidebar-link" data-tab="textbook" href="#">🤖 AI Textbook Parser</a>
+        <a class="sidebar-link" data-tab="images" href="#">🎨 AI Images</a>
         <a class="sidebar-link" data-tab="help" href="#">❓ Help</a>
       </nav>
     </aside>
@@ -259,6 +261,69 @@
           <button class="btn-primary" id="addTermBtn">+ Add Term</button>
         </div>
         <div class="glossary-list" id="adminGlossaryList"></div>
+      </div>
+
+      <!-- Images Tab -->
+      <!-- Textbook AI Parser Tab -->
+      <div class="admin-tab" id="tab-textbook">
+        <h1 class="admin-title">🤖 Grok AI Textbook Analyser</h1>
+        <p class="admin-desc">Paste up to ~2000 words from any history textbook. Grok AI (grok-3-fast) will extract key terms, events, historical figures, era-appropriate jobs, and a narrative hook for game content.</p>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Historical Era (helps AI context)</label>
+          <select class="form-input" id="parseEra" style="max-width:350px">
+            <option value="">Auto-detect from text</option>
+            <option value="Feudal Japan 1185-1868">Feudal Japan (1185–1868)</option>
+            <option value="Pre-Columbian Americas 900-1500">Pre-Columbian Americas (900–1500)</option>
+            <option value="Ancient Rome 100 BCE-476 CE">Ancient Rome (100 BCE–476 CE)</option>
+            <option value="Medieval Europe 500-1400">Medieval Europe (500–1400)</option>
+            <option value="Colonial Africa 1800-1960">Colonial Africa (1800–1960)</option>
+            <option value="World War II 1939-1945">World War II (1939–1945)</option>
+            <option value="Ancient Egypt 3000-30 BCE">Ancient Egypt (3000–30 BCE)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Textbook Text (paste here)</label>
+          <textarea class="form-input" id="textbookInput" rows="14"
+            placeholder="Paste your textbook excerpt here (up to ~2000 words)...
+
+Example: 'In 1603, Tokugawa Ieyasu unified Japan under a new military government called the shogunate. The four-class system—samurai, farmers, artisans, and merchants—defined everyday life...'"></textarea>
+        </div>
+
+        <div style="display:flex;gap:1rem;align-items:center;margin:1rem 0">
+          <button class="btn-primary" id="parseTextbookBtn" style="display:flex;align-items:center;gap:8px">
+            🤖 Analyse with Grok AI
+          </button>
+          <span style="font-size:0.85rem;opacity:0.5">Powered by grok-3-fast via Cloudflare Worker</span>
+        </div>
+
+        <div id="parseResult" style="margin-top:1.5rem"></div>
+      </div>
+
+      <div class="admin-tab" id="tab-images">
+        <h1 class="admin-title">AI Image Library</h1>
+        <p class="admin-desc">All Grok-generated historical scene images stored in Cloudflare R2, indexed in D1. Images are cached — the same prompt will never be regenerated.</p>
+        <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+          <div class="admin-stat-card" style="padding:20px 28px;">
+            <div class="stat-icon">🎨</div>
+            <div class="stat-number" id="imgTotal">–</div>
+            <div class="stat-label">Images in R2</div>
+          </div>
+          <div class="admin-stat-card" style="padding:20px 28px;">
+            <div class="stat-icon">💬</div>
+            <div class="stat-number" id="convoTotal">–</div>
+            <div class="stat-label">Grok Conversations</div>
+          </div>
+        </div>
+        <div style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:0.9rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem">
+          <strong style="color:#c9a84c">Worker:</strong> <span id="workerStatus">Checking...</span>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:24px;">
+          <a href="/gallery.html" target="_blank" class="btn-primary">🖼️ Open Full Gallery</a>
+          <button class="btn-ghost" onclick="loadImageStats()">↻ Refresh</button>
+        </div>
+        <div class="recent-images-grid" id="recentImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;"></div>
       </div>
 
       <!-- Help Tab -->

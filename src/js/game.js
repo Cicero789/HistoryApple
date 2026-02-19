@@ -1,601 +1,1139 @@
 /* ============================================================
-   CHRONOQUEST — GAME ENGINE JS
-   Full RPG engine: scenes, choices, HUD, AI chat, glossary
+   CHRONOQUEST v2.0 — GAME ENGINE
+   Features:
+   • Grok AI live NPC dialogue (via Cloudflare Worker)
+   • AI scene image generation (Grok-2-Image → R2 → D1)
+   • Era-accurate economy (earn/spend/travel costs)
+   • Character selection (traveler / local)
+   • Travel system (short vs. long journey)
+   • Decision consequences with historical accuracy
+   • Glossary pop-ups, quizzes, end-of-chapter summary
    ============================================================ */
 
 // ─── State ─────────────────────────────────────────────────────
 const G = {
-  chapter: null,
-  scene: null,
-  player: { name: 'Traveller', character: null },
-  stats: { health: 100, maxHealth: 100, money: 0, currency: 'coins', inventory: [] },
-  glossary: {},
-  currentNpc: null,
-  sceneHistory: [],
-  quizIndex: 0,
-  jobsDone: [],
-  retryScene: null,
+  chapter:       null,
+  scene:         null,
+  player:        { name: 'Traveller', character: null },
+  stats:         { health: 100, maxHealth: 100, money: 0, currency: 'coins', inventory: [] },
+  glossary:      {},
+  currentNpc:    null,
+  sceneHistory:  [],
+  quizIndex:     0,
+  jobsDone:      [],
+  retryScene:    null,
+  chatHistory:   [],     // [{role, content}] for NPC conversation context
+  imageCache:    {},     // prompt → URL
+  aiOnline:      true,   // false if Worker unreachable
+  soundEnabled:  true,
 };
 
-// ─── URL Params ────────────────────────────────────────────────
-const params = new URLSearchParams(location.search);
+// ─── URL / Storage ──────────────────────────────────────────────
+const params    = new URLSearchParams(location.search);
 const chapterId = params.get('chapter') || '1';
-G.player.name = params.get('player') || localStorage.getItem('chronoquest_player') || 'Traveller';
+G.player.name   = params.get('player') || localStorage.getItem('cq_player') || 'Traveller';
 
-// ─── DOM Refs ──────────────────────────────────────────────────
+// ─── DOM Refs ───────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const sceneBg = $('sceneBg');
-const sceneTitle = $('sceneTitle');
-const sceneEra = $('sceneEra');
-const narrativeText = $('narrativeText');
-const narrativeBox = $('narrativeBox');
-const npcDialogue = $('npcDialogue');
-const npcAvatar = $('npcAvatar');
-const npcName = $('npcName');
-const npcSpeech = $('npcSpeech');
-const eduPopup = $('eduPopup');
-const eduTerm = $('eduTerm');
-const eduBody = $('eduBody');
-const choicesArea = $('choicesArea');
-const choicesGrid = $('choicesGrid');
-const restArea = $('restArea');
-const restOptions = $('restOptions');
-const minigameArea = $('minigameArea');
-const jobGrid = $('jobGrid');
-const quizArea = $('quizArea');
-const summaryArea = $('summaryArea');
-const setbackArea = $('setbackArea');
-const continueArea = $('continueArea');
 
-// ─── Utilities ─────────────────────────────────────────────────
+const DOM = {
+  body:          document.getElementById('gameBody'),
+  sceneBg:       $('sceneBg'),
+  sceneTitle:    $('sceneTitle'),
+  sceneEra:      $('sceneEra'),
+  sceneImage:    $('sceneImage'),
+  narrative:     $('narrativeText'),
+  narrativeBox:  $('narrativeBox'),
+  npcDialogue:   $('npcDialogue'),
+  npcAvatar:     $('npcAvatar'),
+  npcName:       $('npcName'),
+  npcSpeech:     $('npcSpeech'),
+  npcImageWrap:  $('npcImageWrap'),
+  npcPortrait:   $('npcPortrait'),
+  talkBtn:       $('talkToNpc'),
+  eduPopup:      $('eduPopup'),
+  eduTerm:       $('eduTerm'),
+  eduBody:       $('eduBody'),
+  choices:       $('choicesArea'),
+  choicesGrid:   $('choicesGrid'),
+  restArea:      $('restArea'),
+  restOptions:   $('restOptions'),
+  minigame:      $('minigameArea'),
+  jobGrid:       $('jobGrid'),
+  continueJob:   $('continueAfterJob'),
+  travelArea:    $('travelArea'),
+  travelGrid:    $('travelGrid'),
+  quizArea:      $('quizArea'),
+  quizQ:         $('quizQuestion'),
+  quizOpts:      $('quizOptions'),
+  summary:       $('summaryArea'),
+  summaryBody:   $('summaryBody'),
+  setback:       $('setbackArea'),
+  setbackTitle:  $('setbackTitle'),
+  setbackText:   $('setbackText'),
+  setbackLesson: $('setbackLesson'),
+  setbackBtn:    $('setbackRetry'),
+  continueArea:  $('continueArea'),
+  continueBtn:   $('continueBtn'),
+  hudChapter:    $('hudChapter'),
+  healthVal:     $('healthVal'),
+  healthBar:     $('healthBar'),
+  moneyVal:      $('moneyVal'),
+  currencyUnit:  $('currencyUnit'),
+  toasts:        $('toastContainer'),
+  chatModal:     $('chatModal'),
+  chatMessages:  $('chatMessages'),
+  chatInput:     $('chatInput'),
+  chatSend:      $('chatSend'),
+  chatClose:     $('chatClose'),
+  chatNpcName:   $('chatNpcName'),
+  invModal:      $('inventoryModal'),
+  invItems:      $('inventoryItems'),
+  invClose:      $('inventoryClose'),
+  glossModal:    $('glossaryModal'),
+  glossList:     $('glossaryList'),
+  glossClose:    $('glossaryClose'),
+  mapModal:      $('mapModal'),
+  mapClose:      $('mapClose'),
+  mapContent:    $('mapContent'),
+};
+
+// ─── Utilities ──────────────────────────────────────────────────
 function show(...els) { els.forEach(e => e && (e.style.display = '')); }
 function hide(...els) { els.forEach(e => e && (e.style.display = 'none')); }
-function showFlex(...els) { els.forEach(e => e && (e.style.display = 'flex')); }
-function hideAll() {
-  hide(npcDialogue, eduPopup, choicesArea, restArea, minigameArea, quizArea, summaryArea, setbackArea, continueArea);
+function hideAllSections() {
+  [DOM.npcDialogue, DOM.eduPopup, DOM.choices, DOM.restArea,
+   DOM.minigame, DOM.travelArea, DOM.quizArea, DOM.summary,
+   DOM.setback, DOM.continueArea].forEach(el => el && hide(el));
 }
 
-function toast(msg, type = 'info') {
+function toast(msg, type = 'info', duration = 3500) {
   const t = document.createElement('div');
   t.className = `toast toast-${type}`;
-  t.textContent = msg;
-  $('toastContainer').appendChild(t);
-  setTimeout(() => t.remove(), 4000);
+  t.innerHTML = msg;
+  DOM.toasts.appendChild(t);
+  setTimeout(() => t.classList.add('toast-fade'), duration - 500);
+  setTimeout(() => t.remove(), duration);
+}
+
+function md(text) {
+  return (text || '')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function typeText(el, text, speed = 18) {
+  el.innerHTML = '';
+  let i = 0;
+  const html = md(text);
+  // Parse HTML into chunks preserving tags
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  el.innerHTML = html;
+  el.style.opacity = '0';
+  requestAnimationFrame(() => {
+    el.style.transition = 'opacity 0.4s';
+    el.style.opacity = '1';
+  });
 }
 
 function updateHUD() {
-  $('healthVal').textContent = G.stats.health;
-  $('moneyVal').textContent = G.stats.money;
-  $('currencyUnit').textContent = G.stats.currency;
-  const pct = Math.max(0, (G.stats.health / G.stats.maxHealth) * 100);
-  $('healthBar').style.width = `${pct}%`;
+  if (!DOM.healthVal) return;
+  DOM.healthVal.textContent = Math.max(0, G.stats.health);
+  DOM.moneyVal.textContent  = G.stats.money;
+  DOM.currencyUnit.textContent = G.stats.currency;
+  const pct = Math.max(0, Math.min(100, (G.stats.health / G.stats.maxHealth) * 100));
+  if (DOM.healthBar) {
+    DOM.healthBar.style.width = `${pct}%`;
+    DOM.healthBar.style.background = pct > 60 ? '#4ade80' : pct > 30 ? '#facc15' : '#f87171';
+  }
+  if (DOM.hudChapter && G.chapter) DOM.hudChapter.textContent = G.chapter.title;
 }
 
 function applyStatChange(change) {
   if (!change) return;
-  if (change.health) {
+  if (change.health !== undefined) {
+    const old = G.stats.health;
     G.stats.health = Math.max(0, Math.min(G.stats.maxHealth, G.stats.health + change.health));
-    const msg = change.health > 0 ? `+${change.health} health` : `${change.health} health`;
-    toast(msg, change.health > 0 ? 'success' : 'warning');
+    const delta = G.stats.health - old;
+    if (delta !== 0) toast(delta > 0 ? `❤️ +${delta} health` : `💔 ${delta} health`, delta > 0 ? 'success' : 'danger');
   }
-  if (change.money) {
+  if (change.money !== undefined) {
+    const old = G.stats.money;
     G.stats.money = Math.max(0, G.stats.money + change.money);
-    const msg = change.money > 0 ? `+${change.money} ${G.stats.currency} earned` : `${change.money} ${G.stats.currency} spent`;
-    toast(msg, change.money > 0 ? 'success' : 'warning');
+    const delta = G.stats.money - old;
+    if (delta !== 0) toast(delta > 0 ? `💰 +${delta} ${G.stats.currency} earned` : `💸 ${Math.abs(delta)} ${G.stats.currency} spent`, delta > 0 ? 'success' : 'warning');
+  }
+  if (change.item) {
+    G.stats.inventory.push(change.item);
+    toast(`🎒 Added: ${change.item}`, 'info');
   }
   updateHUD();
   saveProgress();
 }
 
+// ─── Background / Theme ─────────────────────────────────────────
+function applyChapterTheme(theme) {
+  const themes = ['sepia', 'earth', 'stone', 'ocean', 'forest', 'desert'];
+  themes.forEach(t => DOM.body && DOM.body.classList.remove(`theme-${t}`));
+  if (theme) DOM.body && DOM.body.classList.add(`theme-${theme}`);
+}
+
 function setBackground(bg) {
-  const cls = bg ? `bg-${bg.replace(/_/g, '-')}` : '';
-  sceneBg.className = 'scene-bg ' + cls;
+  if (!DOM.sceneBg) return;
+  DOM.sceneBg.className = 'scene-bg';
+  if (bg) DOM.sceneBg.classList.add(`bg-${bg.replace(/_/g, '-')}`);
 }
 
-function markdownToHtml(text) {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>');
-}
+// ─── AI Image Loading ────────────────────────────────────────────
+async function loadSceneImage(scene) {
+  if (!DOM.sceneImage) return;
+  if (!scene.aiImage && !scene.imagePrompt && !scene.title) return;
 
-// ─── Load Chapter ───────────────────────────────────────────────
-async function loadChapter(id) {
-  const bar = $('loadingBar');
-  const loadText = $('loadingText');
-  let prog = 0;
-  const interval = setInterval(() => {
-    prog = Math.min(prog + Math.random() * 25, 90);
-    bar.style.width = `${prog}%`;
-  }, 300);
+  const prompt = scene.imagePrompt || `${scene.title}. ${(scene.text || '').slice(0, 120)}`;
+  const cacheKey = `${chapterId}_${scene.id}`;
+
+  // Check memory cache first
+  if (G.imageCache[cacheKey]) {
+    showImage(G.imageCache[cacheKey]);
+    return;
+  }
+
+  // Show placeholder
+  DOM.sceneImage.style.opacity = '0.3';
+  DOM.sceneImage.style.backgroundImage = 'none';
 
   try {
-    loadText.textContent = 'Loading historical data...';
-    const [chRes, glRes] = await Promise.all([
-      fetch(`/api/chapters/${id}`),
-      fetch('/api/glossary')
-    ]);
-    G.chapter = await chRes.json();
-    const glData = await glRes.json();
-    G.glossary = glData.terms || {};
+    const res = await fetch('/api/ai/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        era:       G.chapter.era,
+        region:    G.chapter.region,
+        chapterId: String(chapterId),
+        sceneId:   scene.id,
+      }),
+    });
+    if (!res.ok) throw new Error('Image API error');
+    const data = await res.json();
+    G.imageCache[cacheKey] = data.url;
+    showImage(data.url);
+    if (data.cached) console.log(`[Image] Reused from ${data.cached ? 'cache' : 'new'}: ${data.r2_key || data.url.slice(0,60)}`);
+  } catch(e) {
+    console.warn('[Image] Failed:', e.message);
+    DOM.sceneImage.style.opacity = '0';
+  }
+}
 
-    clearInterval(interval);
-    bar.style.width = '100%';
-    loadText.textContent = 'Preparing your journey...';
+function showImage(url) {
+  if (!DOM.sceneImage || !url) return;
+  const img = new Image();
+  img.onload = () => {
+    DOM.sceneImage.style.backgroundImage = `url('${url}')`;
+    DOM.sceneImage.style.opacity = '1';
+    DOM.sceneImage.style.transition = 'opacity 0.6s';
+  };
+  img.onerror = () => { DOM.sceneImage.style.opacity = '0'; };
+  img.src = url;
+}
 
-    // Set theme
-    document.body.className = `game-page theme-${G.chapter.theme || 'sepia'}`;
-    $('hudChapter').textContent = G.chapter.title;
-    $('sceneEra').textContent = G.chapter.era;
+// ─── NPC Portrait Loading ────────────────────────────────────────
+async function loadNpcPortrait(npc) {
+  if (!DOM.npcPortrait || !npc || !G.chapter) return;
+  if (!npc.name) return;
 
-    // Init stats
-    const s = G.chapter.startingStats;
-    G.stats.health = s.health || 100;
-    G.stats.maxHealth = s.health || 100;
-    G.stats.money = s.money || 0;
-    G.stats.currency = s.currency || 'coins';
-    G.stats.inventory = [...(s.inventory || [])];
-    updateHUD();
+  const cacheKey = `portrait_${npc.name}`;
+  if (G.imageCache[cacheKey]) {
+    DOM.npcPortrait.src = G.imageCache[cacheKey];
+    show(DOM.npcImageWrap);
+    return;
+  }
 
-    await new Promise(r => setTimeout(r, 600));
+  try {
+    const res = await fetch('/api/ai/portrait', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        npcName:    npc.name,
+        era:        G.chapter.era,
+        region:     G.chapter.region,
+        description: npc.description || '',
+        chapterId:  String(chapterId),
+      }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    G.imageCache[cacheKey] = data.url;
+    DOM.npcPortrait.src = data.url;
+    DOM.npcPortrait.onload = () => show(DOM.npcImageWrap);
+  } catch(e) {
+    console.warn('[Portrait] Failed:', e.message);
+  }
+}
 
-    // Hide loading, show character select
-    const ls = $('loadingScreen');
-    ls.style.opacity = '0';
-    setTimeout(() => ls.style.display = 'none', 500);
+// ─── Scene Renderer ─────────────────────────────────────────────
+async function renderScene(sceneId) {
+  if (!G.chapter) return;
+  const scene = G.chapter.scenes.find(s => s.id === sceneId);
+  if (!scene) {
+    console.error('Scene not found:', sceneId);
+    return;
+  }
 
-    showCharacterSelect();
-  } catch (err) {
-    console.error('Failed to load chapter:', err);
-    clearInterval(interval);
-    toast('Failed to load chapter. Is the server running?', 'error');
-    $('loadingText').textContent = 'Failed to load. Try refreshing.';
+  G.scene = scene;
+  G.sceneHistory.push(sceneId);
+  hideAllSections();
+
+  // Update header
+  if (DOM.sceneTitle) DOM.sceneTitle.textContent = scene.title || '';
+  if (DOM.sceneEra)   DOM.sceneEra.textContent   = G.chapter.era || '';
+
+  // Background
+  setBackground(scene.background);
+
+  // Narrative text
+  if (DOM.narrative) {
+    const text = replacePlaceholders(scene.text || scene.narrative || '');
+    typeText(DOM.narrative, text);
+  }
+
+  // Load AI scene image async (don't block render)
+  if (scene.type !== 'character-select') {
+    loadSceneImage(scene);
+  }
+
+  // Educational term pop-up
+  if (scene.educationalTerm && G.glossary[scene.educationalTerm]) {
+    setTimeout(() => showEduPopup(scene.educationalTerm, scene.educationalNote), 1200);
+  } else if (scene.educationalNote && scene.educationalTerm) {
+    setTimeout(() => showEduPopup(scene.educationalTerm, scene.educationalNote), 1200);
+  }
+
+  // NPC
+  if (scene.npc) {
+    G.currentNpc = scene.npc;
+    if (DOM.npcAvatar) DOM.npcAvatar.textContent = scene.npc.avatar || '🧑';
+    if (DOM.npcName)   DOM.npcName.textContent   = scene.npc.name || '';
+    if (DOM.npcSpeech) DOM.npcSpeech.textContent = scene.npcDialogue || scene.dialogue || '';
+    show(DOM.npcDialogue);
+    hide(DOM.npcImageWrap);
+    loadNpcPortrait(scene.npc);
+    G.chatHistory = [];  // Reset chat history for new NPC
+  } else {
+    hide(DOM.npcDialogue);
+    G.currentNpc = null;
+  }
+
+  // Scene type specific rendering
+  switch (scene.type) {
+    case 'character-select': renderCharacterSelect(scene); break;
+    case 'narrative':        renderNarrative(scene);       break;
+    case 'choice':           renderChoices(scene);          break;
+    case 'setback':          renderSetback(scene);          break;
+    case 'rest':             renderRest(scene);             break;
+    case 'minigame':         renderMinigame(scene);         break;
+    case 'travel':           renderTravel(scene);           break;
+    case 'quiz':             renderQuiz(scene);             break;
+    case 'summary':          renderSummary(scene);          break;
+    default:                 renderNarrative(scene);
+  }
+
+  updateHUD();
+}
+
+// ─── Narrative ──────────────────────────────────────────────────
+function renderNarrative(scene) {
+  if (scene.next) {
+    show(DOM.continueArea);
+    if (DOM.continueBtn) {
+      DOM.continueBtn.textContent = scene.continueText || 'Continue →';
+      DOM.continueBtn.onclick = () => renderScene(scene.next);
+    }
   }
 }
 
 // ─── Character Select ────────────────────────────────────────────
-function showCharacterSelect() {
-  const overlay = $('characterSelect');
-  $('charSubtitle').textContent = G.chapter.era;
-  const opts = $('charOptions');
-  opts.innerHTML = '';
+function renderCharacterSelect(scene) {
+  const characters = G.chapter.characters || [];
+  if (!DOM.choicesGrid) return;
 
-  G.chapter.characters.forEach(ch => {
+  DOM.choicesGrid.innerHTML = '';
+  characters.forEach(char => {
     const btn = document.createElement('button');
-    btn.className = 'char-option-btn';
+    btn.className = 'choice-btn character-choice';
     btn.innerHTML = `
-      <div class="char-option-avatar">${ch.avatar}</div>
-      <div class="char-option-name">${ch.name}</div>
-      <div class="char-option-desc">${ch.description}</div>
+      <div class="char-avatar">${char.avatar || '🧑'}</div>
+      <div class="char-name">${char.name}</div>
+      <div class="char-desc">${char.description}</div>
+      <div class="char-bonus">✨ ${char.bonus || 'balanced'}</div>
     `;
-    btn.addEventListener('click', () => {
-      G.player.character = ch;
-      overlay.style.display = 'none';
-      toast(`Playing as ${ch.name}`, 'success');
-      playScene('intro');
-    });
-    opts.appendChild(btn);
+    btn.onclick = () => {
+      G.player.character = char;
+      toast(`Playing as: ${char.name}`, 'success');
+      // Apply character bonus
+      if (char.startingBonus) applyStatChange(char.startingBonus);
+      saveProgress();
+      renderScene(scene.next || G.chapter.scenes[1].id);
+    };
+    DOM.choicesGrid.appendChild(btn);
   });
-  overlay.style.display = 'flex';
-}
 
-// ─── Scene Engine ─────────────────────────────────────────────────
-function playScene(sceneId) {
-  const scene = G.chapter.scenes.find(s => s.id === sceneId);
-  if (!scene) { console.error('Scene not found:', sceneId); return; }
-
-  G.scene = scene;
-  G.sceneHistory.push(sceneId);
-  hideAll();
-  setBackground(scene.background || '');
-
-  // Scroll to top of content
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Title
-  sceneTitle.textContent = scene.title || '';
-
-  // Apply any stat changes
-  if (scene.statChange) applyStatChange(scene.statChange);
-
-  // Narrative
-  narrativeText.innerHTML = markdownToHtml(scene.text || '');
-  show(narrativeBox);
-
-  // Educational popup
-  if (scene.educationalTerm && G.glossary[scene.educationalTerm]) {
-    setTimeout(() => showEduPopup(scene.educationalTerm), 800);
-  } else if (scene.educationalNote) {
-    setTimeout(() => showEduNote(scene.educationalTerm || 'Historical Note', scene.educationalNote), 800);
-  }
-
-  // Route by scene type
-  switch (scene.type) {
-    case 'narrative':
-      handleNarrativeScene(scene);
-      break;
-    case 'choice':
-      handleChoiceScene(scene);
-      break;
-    case 'setback':
-      handleSetbackScene(scene);
-      break;
-    case 'rest':
-      handleRestScene(scene);
-      break;
-    case 'minigame':
-      handleMinigameScene(scene);
-      break;
-    case 'summary':
-      handleSummaryScene(scene);
-      break;
-    default:
-      handleNarrativeScene(scene);
+  show(DOM.choices);
+  if (DOM.choices.querySelector('.choices-prompt')) {
+    DOM.choices.querySelector('.choices-prompt').textContent = scene.choicePrompt || 'Choose your character:';
   }
 }
 
-function handleNarrativeScene(scene) {
-  if (scene.npc) showNpc(scene.npc, scene.npcDialogue);
-  if (scene.next) {
-    setTimeout(() => {
-      show(continueArea);
-      $('continueBtn').onclick = () => { hide(continueArea); playScene(scene.next); };
-    }, 500);
+// ─── Choices ─────────────────────────────────────────────────────
+function renderChoices(scene) {
+  if (!DOM.choicesGrid) return;
+  DOM.choicesGrid.innerHTML = '';
+
+  const choices = scene.choices || [];
+  choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `
+      <span class="choice-text">${choice.text}</span>
+      ${choice.hint ? `<span class="choice-hint">${choice.hint}</span>` : ''}
+      ${choice.cost ? `<span class="choice-cost">💰 ${choice.cost} ${G.stats.currency}</span>` : ''}
+    `;
+
+    // Disable if can't afford
+    if (choice.cost && G.stats.money < choice.cost) {
+      btn.classList.add('choice-disabled');
+      btn.title = `Need ${choice.cost} ${G.stats.currency}`;
+    } else {
+      btn.onclick = () => makeChoice(choice, scene);
+    }
+
+    DOM.choicesGrid.appendChild(btn);
+  });
+
+  show(DOM.choices);
+}
+
+function makeChoice(choice, scene) {
+  G.retryScene = scene.id;
+
+  // Apply stat changes
+  if (choice.statChange) applyStatChange(choice.statChange);
+  if (choice.cost)        applyStatChange({ money: -choice.cost });
+
+  // Play sound effect
+  playSound(choice.outcome && scene.scenes ? 'decision' : 'click');
+
+  // Navigate
+  if (choice.outcome) {
+    setTimeout(() => renderScene(choice.outcome), 300);
+  } else if (choice.next) {
+    setTimeout(() => renderScene(choice.next), 300);
   }
 }
 
-function handleChoiceScene(scene) {
-  if (scene.npc) showNpc(scene.npc, scene.dialogue);
-  setTimeout(() => {
-    show(choicesArea);
-    choicesGrid.innerHTML = '';
-    scene.choices.forEach(choice => {
-      const btn = document.createElement('button');
-      btn.className = 'choice-btn';
-      btn.innerHTML = `
-        <span>${choice.text}</span>
-        ${choice.hint ? `<span class="choice-hint">${choice.hint}</span>` : ''}
-      `;
-      btn.addEventListener('click', () => {
-        hide(choicesArea, npcDialogue);
-        if (choice.statChange) applyStatChange(choice.statChange);
-        playScene(choice.outcome);
-      });
-      choicesGrid.appendChild(btn);
-    });
-  }, 600);
-}
+// ─── Setback ─────────────────────────────────────────────────────
+function renderSetback(scene) {
+  if (DOM.setbackTitle)  DOM.setbackTitle.textContent  = scene.title || 'Setback!';
+  if (DOM.setbackText)   DOM.setbackText.innerHTML     = md(scene.text || '');
+  if (DOM.setbackLesson) DOM.setbackLesson.innerHTML   = md(scene.lesson || '');
 
-function handleSetbackScene(scene) {
-  hide(narrativeBox);
-  show(setbackArea);
-  $('setbackTitle').textContent = scene.title || 'A Setback!';
-  $('setbackText').textContent = scene.text || '';
-  $('setbackLesson').innerHTML = scene.lesson ? `📚 Historical Lesson: ${scene.lesson}` : '';
-
-  if (scene.retry === false) {
-    // Non-retry setback — just continue
-    $('retryBtn').textContent = 'Continue →';
-    $('retryBtn').onclick = () => { hide(setbackArea); if (scene.next) playScene(scene.next); };
-  } else {
-    const retryTarget = G.retryScene || G.sceneHistory[G.sceneHistory.length - 2] || 'intro';
-    $('retryBtn').textContent = '← Try Again';
-    $('retryBtn').onclick = () => {
-      hide(setbackArea);
-      G.sceneHistory.pop(); // remove setback from history
-      G.sceneHistory.pop(); // remove the failed choice scene
-      playScene(retryTarget);
+  if (DOM.setbackBtn) {
+    DOM.setbackBtn.textContent = scene.retryText || (scene.retry ? '← Try Again' : 'Continue →');
+    DOM.setbackBtn.onclick = () => {
+      if (scene.retry && G.retryScene) renderScene(G.retryScene);
+      else if (scene.next) renderScene(scene.next);
+      else if (G.retryScene) renderScene(G.retryScene);
     };
   }
+  show(DOM.setback);
 }
 
-function handleRestScene(scene) {
-  show(restArea);
-  restOptions.innerHTML = '';
+// ─── Rest ────────────────────────────────────────────────────────
+function renderRest(scene) {
+  if (!DOM.restOptions) return;
+  DOM.restOptions.innerHTML = '';
 
-  scene.restOptions.forEach(opt => {
+  const options = scene.restOptions || [
+    { id: 'camp',   label: '🏕️ Camp outdoors',  cost: 0,  health: 10, description: 'Free but basic rest. +10 health.' },
+    { id: 'inn',    label: '🏠 Stay at an inn', cost: scene.innCost || 8,  health: 30, description: `Comfortable rest. +30 health. (${scene.innCost || 8} ${G.stats.currency})` },
+    { id: 'temple', label: '⛩️ Temple shelter',  cost: 0,  health: 20, description: 'Monks offer free shelter. +20 health.' },
+  ];
+
+  options.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'rest-option glass';
     const canAfford = opt.cost === 0 || G.stats.money >= opt.cost;
-    const btn = document.createElement('button');
-    btn.className = 'rest-btn';
-    btn.disabled = !canAfford;
-    if (!canAfford) btn.style.opacity = '0.4';
-    btn.innerHTML = `
-      <span class="rest-icon">${opt.id === 'inn' ? '🏮' : opt.id === 'temple' ? '🛕' : '🌙'}</span>
-      <div class="rest-info">
-        <span class="rest-title">${opt.title}</span>
-        <span class="rest-desc">${opt.description}</span>
-        ${opt.historicalNote ? `<span class="rest-note">${opt.historicalNote}</span>` : ''}
-      </div>
-      <div class="rest-cost">
-        <div>+${opt.healthRestore} HP</div>
-        <div>${opt.cost > 0 ? `-${opt.cost} ${G.stats.currency}` : 'Free'}</div>
-      </div>
+    div.innerHTML = `
+      <div class="rest-label">${opt.label}</div>
+      <div class="rest-desc">${opt.description}</div>
+      <div class="rest-health">❤️ +${opt.health} health</div>
+      ${opt.cost > 0 ? `<div class="rest-cost ${canAfford ? '' : 'unaffordable'}">💰 ${opt.cost} ${G.stats.currency}</div>` : '<div class="rest-free">Free</div>'}
     `;
-    btn.addEventListener('click', () => {
-      if (!canAfford) return;
-      applyStatChange({ health: opt.healthRestore, money: -opt.cost });
-      hide(restArea);
-      toast(`Rested well! +${opt.healthRestore} health`, 'success');
-      if (scene.next) playScene(scene.next);
-    });
-    restOptions.appendChild(btn);
+    if (canAfford) {
+      div.style.cursor = 'pointer';
+      div.onclick = () => {
+        if (opt.cost > 0) applyStatChange({ money: -opt.cost });
+        applyStatChange({ health: opt.health });
+        toast(`${opt.label} — Rested well!`, 'success');
+        if (scene.next) setTimeout(() => renderScene(scene.next), 1000);
+      };
+    } else {
+      div.classList.add('rest-disabled');
+      div.title = `Need ${opt.cost} ${G.stats.currency}`;
+    }
+    DOM.restOptions.appendChild(div);
   });
+
+  show(DOM.restArea);
 }
 
-function handleMinigameScene(scene) {
-  show(minigameArea);
-  jobGrid.innerHTML = '';
-  hide($('continueAfterJob'));
+// ─── Minigame (Jobs) ─────────────────────────────────────────────
+function renderMinigame(scene) {
+  if (!DOM.jobGrid) return;
+  DOM.jobGrid.innerHTML = '';
 
-  let jobsCompleted = 0;
-
-  scene.jobs.forEach(job => {
+  const jobs = scene.jobs || [];
+  jobs.forEach(job => {
+    const alreadyDone = G.jobsDone.includes(job.id);
     const card = document.createElement('div');
-    card.className = 'job-card';
+    card.className = `job-card glass ${alreadyDone ? 'job-done' : ''}`;
     card.innerHTML = `
       <div class="job-header">
         <span class="job-title">${job.title}</span>
         <span class="job-pay">+${job.pay} ${G.stats.currency}</span>
       </div>
-      <p class="job-desc">${job.description}</p>
-      ${job.historicalNote ? `<p class="job-note">📜 ${job.historicalNote}</p>` : ''}
+      <div class="job-desc">${job.description}</div>
       <div class="job-meta">
-        <span class="job-tag">⏱ ${job.time}</span>
-        <span class="job-tag">💪 ${job.difficulty}</span>
+        <span class="job-time">⏰ ${job.time}</span>
+        <span class="job-diff diff-${job.difficulty}">${job.difficulty}</span>
+      </div>
+      <div class="job-note">📜 ${job.historicalNote || ''}</div>
+      ${alreadyDone 
+        ? '<div class="job-done-badge">✅ Completed</div>' 
+        : `<button class="btn-work" data-job="${job.id}">Work →</button>`}
+    `;
+
+    if (!alreadyDone) {
+      card.querySelector('.btn-work').onclick = () => doJob(job, scene);
+    }
+
+    DOM.jobGrid.appendChild(card);
+  });
+
+  if (scene.next) {
+    show(DOM.continueJob);
+    DOM.continueJob.textContent = 'Continue Journey →';
+    DOM.continueJob.onclick = () => renderScene(scene.next);
+  }
+
+  show(DOM.minigame);
+}
+
+function doJob(job, scene) {
+  if (G.jobsDone.includes(job.id)) { toast('Already done this job today.', 'warning'); return; }
+
+  // Simulate job with small interaction
+  const duration = job.difficulty === 'hard' ? 2000 : job.difficulty === 'medium' ? 1500 : 1000;
+
+  // Animate the work
+  const btn = DOM.jobGrid.querySelector(`[data-job="${job.id}"]`);
+  if (btn) {
+    btn.textContent = '⚒️ Working...';
+    btn.disabled = true;
+    btn.classList.add('working');
+  }
+
+  setTimeout(() => {
+    G.jobsDone.push(job.id);
+    applyStatChange({ money: job.pay });
+    if (job.healthCost) applyStatChange({ health: -job.healthCost });
+    toast(`✅ ${job.title} complete! +${job.pay} ${G.stats.currency}`, 'success');
+    renderMinigame(scene);  // Re-render to show done state
+    playSound('earn');
+  }, duration);
+}
+
+// ─── Travel ──────────────────────────────────────────────────────
+function renderTravel(scene) {
+  if (!DOM.travelGrid) return;
+  DOM.travelGrid.innerHTML = '';
+
+  const routes = scene.routes || scene.choices || [];
+  routes.forEach(route => {
+    const div = document.createElement('div');
+    div.className = 'travel-route glass';
+    const canAfford = !route.cost || G.stats.money >= route.cost;
+    const hasTransport = !route.requiresTransport || G.stats.inventory.includes(route.requiresTransport);
+
+    div.innerHTML = `
+      <div class="route-header">
+        <span class="route-icon">${route.icon || '🗺️'}</span>
+        <span class="route-name">${route.text || route.name}</span>
+        <span class="route-type ${route.isLong ? 'long-journey' : 'short-journey'}">${route.isLong ? 'Long Journey' : 'Short Trip'}</span>
+      </div>
+      <div class="route-desc">${route.description || ''}</div>
+      <div class="route-requirements">
+        ${route.cost ? `<span class="req-cost ${canAfford ? '' : 'req-missing'}">💰 ${route.cost} ${G.stats.currency}</span>` : ''}
+        ${route.requiresTransport ? `<span class="req-transport ${hasTransport ? '' : 'req-missing'}">${route.icon || '🐎'} ${route.requiresTransport}</span>` : ''}
+        ${route.healthCost ? `<span class="req-health">❤️ -${route.healthCost} health</span>` : ''}
+        ${route.duration ? `<span class="req-time">⏰ ${route.duration}</span>` : ''}
       </div>
     `;
-    card.addEventListener('click', () => {
-      if (card.classList.contains('selected')) return;
-      card.classList.add('selected');
-      G.jobsDone.push(job.id);
-      applyStatChange({ money: job.pay });
-      jobsCompleted++;
-      toast(`Completed: ${job.title} +${job.pay} ${G.stats.currency}`, 'success');
-      card.innerHTML += `<div style="color:#22c55e;margin-top:8px;font-size:0.85rem">✓ Job Completed</div>`;
 
-      // Show continue after first job
-      const continueBtn = $('continueAfterJob');
-      continueBtn.style.display = 'block';
-      continueBtn.onclick = () => {
-        hide(minigameArea);
-        if (scene.next) playScene(scene.next);
+    if (canAfford && hasTransport) {
+      div.style.cursor = 'pointer';
+      div.onclick = () => {
+        if (route.cost) applyStatChange({ money: -route.cost });
+        if (route.healthCost) applyStatChange({ health: -route.healthCost });
+        if (route.statChange) applyStatChange(route.statChange);
+        toast(`🗺️ Travelling to ${route.destination || 'next location'}...`, 'info');
+        if (route.outcome) setTimeout(() => renderScene(route.outcome), 800);
+        else if (route.next) setTimeout(() => renderScene(route.next), 800);
       };
-    });
-    jobGrid.appendChild(card);
-  });
-}
-
-function handleSummaryScene(scene) {
-  hide(narrativeBox);
-  show(summaryArea);
-
-  // Run quiz first
-  if (scene.quiz && scene.quiz.length > 0) {
-    G.quizIndex = 0;
-    showQuiz(scene.quiz, () => showFinalSummary(scene));
-  } else {
-    showFinalSummary(scene);
-  }
-}
-
-// ─── Quiz Engine ──────────────────────────────────────────────────
-function showQuiz(questions, onComplete) {
-  hide(summaryArea);
-  show(quizArea);
-
-  function renderQuestion(idx) {
-    if (idx >= questions.length) {
-      hide(quizArea);
-      onComplete();
-      return;
+    } else {
+      div.classList.add('route-blocked');
+      if (!canAfford) div.title = `Need ${route.cost} ${G.stats.currency}`;
+      if (!hasTransport) div.title = `Need: ${route.requiresTransport}`;
     }
-    const q = questions[idx];
-    $('quizQuestion').textContent = `Question ${idx + 1}/${questions.length}: ${q.q}`;
-    $('quizFeedback').textContent = '';
-    $('quizFeedback').className = 'quiz-feedback';
-    hide($('quizNext'));
 
-    const opts = $('quizOptions');
-    opts.innerHTML = '';
-    q.options.forEach((opt, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'quiz-opt-btn';
-      btn.textContent = opt;
-      btn.addEventListener('click', () => {
-        opts.querySelectorAll('button').forEach(b => b.disabled = true);
-        if (i === q.answer) {
-          btn.classList.add('correct');
-          $('quizFeedback').className = 'quiz-feedback correct-fb';
-          $('quizFeedback').textContent = '✓ Correct! Well done.';
-          applyStatChange({ health: 5 });
-        } else {
-          btn.classList.add('wrong');
-          opts.querySelectorAll('button')[q.answer].classList.add('correct');
-          $('quizFeedback').className = 'quiz-feedback wrong-fb';
-          $('quizFeedback').textContent = `Not quite. The answer is: "${q.options[q.answer]}"`;
-        }
-        show($('quizNext'));
-        $('quizNext').onclick = () => renderQuestion(idx + 1);
-      });
-      opts.appendChild(btn);
-    });
-  }
+    DOM.travelGrid.appendChild(div);
+  });
 
-  renderQuestion(0);
+  show(DOM.travelArea);
 }
 
-// ─── Final Summary ─────────────────────────────────────────────────
-function showFinalSummary(scene) {
-  show(summaryArea);
-  summaryArea.innerHTML = `
-    <div class="summary-box">
-      <h2 class="summary-title">✨ ${scene.title}</h2>
-      <p class="summary-subtitle">${scene.summary}</p>
+// ─── Quiz ────────────────────────────────────────────────────────
+function renderQuiz(scene) {
+  const questions = scene.questions || [];
+  if (!questions.length) { if (scene.next) renderScene(scene.next); return; }
 
-      <div class="summary-section">
-        <h3>🎓 Key Lessons</h3>
-        ${(scene.lessons || []).map(l => `<div class="lesson-item">${l}</div>`).join('')}
+  const q = questions[G.quizIndex % questions.length];
+  if (!q) { if (scene.next) renderScene(scene.next); return; }
+
+  if (DOM.quizQ) DOM.quizQ.textContent = q.question;
+  if (!DOM.quizOpts) return;
+
+  DOM.quizOpts.innerHTML = '';
+  (q.options || []).forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(i, q, scene, questions);
+    DOM.quizOpts.appendChild(btn);
+  });
+
+  show(DOM.quizArea);
+}
+
+function checkAnswer(idx, q, scene, allQs) {
+  const correct = idx === q.correct;
+  const btns = DOM.quizOpts.querySelectorAll('.quiz-option');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === idx && !correct) b.classList.add('wrong');
+  });
+
+  if (correct) {
+    applyStatChange({ health: 5, money: 2 });
+    toast('✅ Correct! +5 health +2 coins', 'success');
+    playSound('correct');
+  } else {
+    applyStatChange({ health: -5 });
+    toast(`❌ ${q.explanation || 'Incorrect.'}`, 'danger');
+    playSound('wrong');
+  }
+
+  G.quizIndex++;
+  setTimeout(() => {
+    if (G.quizIndex < allQs.length) {
+      renderQuiz(scene);
+    } else {
+      G.quizIndex = 0;
+      if (scene.next) renderScene(scene.next);
+    }
+  }, 2000);
+}
+
+// ─── Summary ──────────────────────────────────────────────────────
+function renderSummary(scene) {
+  if (!DOM.summaryBody) return;
+
+  const timeSpent = G.sceneHistory.length;
+  const moneyEarned = G.stats.money - (G.chapter.startingStats?.money || 0);
+  const choicesCorrect = G.sceneHistory.filter(id => {
+    const s = G.chapter.scenes.find(sc => sc.id === id);
+    return s && s.type === 'narrative' && !s.type === 'setback';
+  }).length;
+
+  // Build guiding question block if present
+  const guidingQ = G.chapter.guidingQuestion || '';
+  const guidingA = scene.guidingQuestionAnswer || '';
+  const guidingBlock = (guidingQ || guidingA) ? `
+    <div class="summary-guiding glass">
+      ${guidingQ ? `<h3 class="summary-guiding-q">🧭 Guiding Question: <em>${guidingQ}</em></h3>` : ''}
+      ${guidingA ? `<p class="summary-guiding-a">${md(guidingA)}</p>` : ''}
+    </div>` : '';
+
+  // Build lessons list if present
+  const lessonsArr = scene.lessons || [];
+  const lessonsBlock = lessonsArr.length ? `
+    <div class="summary-lessons glass">
+      <h3>📖 Key Lessons</h3>
+      <ul class="summary-lessons-list">
+        ${lessonsArr.map(l => `<li>${md(l)}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  // Build analysis questions if present
+  const analysisArr = scene.analysisQuestions || [];
+  const analysisBlock = analysisArr.length ? `
+    <div class="summary-analysis glass">
+      <h3>💬 Analysis Questions</h3>
+      <ol class="summary-analysis-list">
+        ${analysisArr.map(q => `<li>${q}</li>`).join('')}
+      </ol>
+    </div>` : '';
+
+  // Build key terms if present
+  const keyTermsArr = scene.keyTerms || [];
+  const keyTermsBlock = keyTermsArr.length ? `
+    <div class="summary-terms glass">
+      <h3>📚 Key Terms</h3>
+      <div class="summary-terms-grid">
+        ${keyTermsArr.map(t => `<span class="summary-term-tag">${t}</span>`).join('')}
       </div>
+    </div>` : '';
 
-      ${scene.keyTerms ? `
-      <div class="summary-section">
-        <h3>📖 Key Terms Learned</h3>
-        <div class="key-terms">
-          ${scene.keyTerms.map(t => `<button class="key-term-chip" onclick="showEduPopup('${t}')">${t}</button>`).join('')}
-        </div>
-      </div>` : ''}
+  // Build quiz block if present (inline quiz from scene.quiz array)
+  const quizArr = scene.quiz || [];
+  const quizBlock = quizArr.length ? `
+    <div class="summary-quiz glass" id="summaryQuizBlock">
+      <h3>📝 Quick Quiz</h3>
+      <div id="summaryQuizContainer"></div>
+    </div>` : '';
 
-      <div class="summary-section">
-        <h3>📊 Your Stats</h3>
-        <div style="display:flex;gap:24px;font-family:var(--font-ui);font-size:0.9rem;">
-          <span>❤️ Health: ${G.stats.health}/${G.stats.maxHealth}</span>
-          <span>💰 ${G.stats.currency}: ${G.stats.money}</span>
-          <span>🎒 Items: ${G.stats.inventory.length}</span>
-        </div>
+  DOM.summaryBody.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="ss-icon">❤️</div>
+        <div class="ss-val">${G.stats.health}</div>
+        <div class="ss-label">Final Health</div>
       </div>
-
-      <div class="summary-actions">
-        <a href="/" class="btn-ghost">← All Chapters</a>
-        <button class="btn-primary" onclick="location.reload()">▶ Play Again</button>
+      <div class="summary-stat">
+        <div class="ss-icon">💰</div>
+        <div class="ss-val">${G.stats.money} ${G.stats.currency}</div>
+        <div class="ss-label">Money Accumulated</div>
+      </div>
+      <div class="summary-stat">
+        <div class="ss-icon">🗺️</div>
+        <div class="ss-val">${timeSpent}</div>
+        <div class="ss-label">Scenes Visited</div>
+      </div>
+      <div class="summary-stat">
+        <div class="ss-icon">🎒</div>
+        <div class="ss-val">${G.stats.inventory.length}</div>
+        <div class="ss-label">Items Collected</div>
       </div>
     </div>
+    <div class="summary-message">
+      ${md(scene.summary || scene.summaryText || `You have completed **${G.chapter.title}**! Your journey through ${G.chapter.era} showed the complexity of this historical period.`)}
+    </div>
+    ${guidingBlock}
+    ${lessonsBlock}
+    ${keyTermsBlock}
+    ${analysisBlock}
+    ${quizBlock}
+    ${scene.historicalNote ? `<div class="summary-historical glass"><h3>📖 Historical Context</h3><p>${md(scene.historicalNote)}</p></div>` : ''}
+    <div class="summary-actions">
+      <a href="/" class="btn-home">← Choose New Chapter</a>
+      ${scene.quizScene ? `<button class="btn-quiz" onclick="renderScene('${scene.quizScene}')">📝 Full Quiz</button>` : ''}
+    </div>
   `;
+
+  // Render inline quiz if present
+  if (quizArr.length) {
+    renderInlineSummaryQuiz(quizArr);
+  }
+
+  show(DOM.summary);
+  saveProgress();
+  toast('🏆 Chapter Complete!', 'success', 5000);
 }
 
-// ─── NPC Display ──────────────────────────────────────────────────
-function showNpc(npc, speech) {
-  show(npcDialogue);
-  npcAvatar.textContent = npc.avatar || '👤';
-  npcName.textContent = npc.name || 'NPC';
-  npcSpeech.textContent = speech || '';
-  G.currentNpc = npc;
+// ─── Inline Summary Quiz ─────────────────────────────────────────
+function renderInlineSummaryQuiz(quizArr) {
+  const container = document.getElementById('summaryQuizContainer');
+  if (!container) return;
+
+  let currentQ = 0;
+  let score = 0;
+
+  function showQuestion() {
+    if (currentQ >= quizArr.length) {
+      container.innerHTML = `
+        <div class="quiz-complete">
+          <div class="quiz-score">Score: ${score} / ${quizArr.length}</div>
+          <div class="quiz-score-msg">${score >= quizArr.length * 0.7 ? '🏆 Excellent work!' : score >= quizArr.length * 0.5 ? '👍 Good effort!' : '📚 Review the chapter to strengthen your knowledge!'}</div>
+        </div>`;
+      applyStatChange({ money: score * 2, health: score });
+      return;
+    }
+
+    const q = quizArr[currentQ];
+    container.innerHTML = `
+      <div class="sq-question">
+        <div class="sq-q-num">Question ${currentQ + 1} of ${quizArr.length}</div>
+        <div class="sq-q-text">${q.q}</div>
+        <div class="sq-options">
+          ${(q.options || []).map((opt, i) => `
+            <button class="sq-opt" data-idx="${i}">${opt}</button>
+          `).join('')}
+        </div>
+      </div>`;
+
+    container.querySelectorAll('.sq-opt').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const chosen = parseInt(this.dataset.idx);
+        const correct = q.answer;
+        container.querySelectorAll('.sq-opt').forEach((b, i) => {
+          b.disabled = true;
+          if (i === correct) b.classList.add('sq-correct');
+          else if (i === chosen && chosen !== correct) b.classList.add('sq-wrong');
+        });
+        if (chosen === correct) { score++; toast('✅ Correct!', 'success'); }
+        else { toast(`❌ The answer was: ${q.options[correct]}`, 'danger'); }
+        setTimeout(() => { currentQ++; showQuestion(); }, 1800);
+      });
+    });
+  }
+
+  showQuestion();
 }
 
-// ─── Educational Popups ───────────────────────────────────────────
-function showEduPopup(term) {
-  const entry = G.glossary[term];
-  if (!entry) return;
-  show(eduPopup);
-  eduTerm.textContent = term;
-  eduBody.innerHTML = `
-    <p>${markdownToHtml(entry.definition)}</p>
-    ${entry.link ? `<a class="edu-link" href="${entry.link}" target="_blank" style="color:var(--gold);opacity:0.7;font-size:0.85rem;display:block;margin-top:8px;">🔗 Learn more about ${term}</a>` : ''}
+// ─── Educational Popup ────────────────────────────────────────────
+function showEduPopup(term, note) {
+  if (!DOM.eduPopup) return;
+
+  const glossaryDef = G.glossary[term] || {};
+  if (DOM.eduTerm) DOM.eduTerm.textContent = term;
+  if (DOM.eduBody) {
+    DOM.eduBody.innerHTML = md(note || glossaryDef.definition || 'No definition available.');
+  }
+  show(DOM.eduPopup);
+
+  // Auto-hide after 8 seconds
+  const autoHide = setTimeout(() => hide(DOM.eduPopup), 8000);
+  if (DOM.eduPopup._autoHide) clearTimeout(DOM.eduPopup._autoHide);
+  DOM.eduPopup._autoHide = autoHide;
+}
+
+// ─── AI Chat Modal ────────────────────────────────────────────────
+function openChatModal() {
+  if (!G.currentNpc || !DOM.chatModal) return;
+  if (DOM.chatNpcName) DOM.chatNpcName.textContent = `💬 Chat with ${G.currentNpc.name}`;
+  if (DOM.chatMessages) DOM.chatMessages.innerHTML = '';
+  
+  // Show initial NPC speech in chat
+  const initMsg = G.scene?.npcDialogue || G.scene?.dialogue || '';
+  if (initMsg) addChatMessage(initMsg, 'npc');
+
+  show(DOM.chatModal);
+  if (DOM.chatInput) DOM.chatInput.focus();
+}
+
+function addChatMessage(text, who) {
+  if (!DOM.chatMessages) return;
+  const div = document.createElement('div');
+  div.className = `chat-msg chat-${who}`;
+  div.innerHTML = `
+    <div class="chat-bubble">${md(text)}</div>
+    <div class="chat-meta">${who === 'npc' ? (G.currentNpc?.name || 'NPC') : G.player.name}</div>
   `;
+  DOM.chatMessages.appendChild(div);
+  DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
 }
 
-function showEduNote(term, note) {
-  show(eduPopup);
-  eduTerm.textContent = term || 'Historical Note';
-  eduBody.innerHTML = `<p>${markdownToHtml(note)}</p>`;
-}
-
-$('eduClose')?.addEventListener('click', () => hide(eduPopup));
-
-// ─── AI Chat ──────────────────────────────────────────────────────
-$('talkToNpc')?.addEventListener('click', openChat);
-
-function openChat() {
-  if (!G.currentNpc) return;
-  $('chatNpcName').textContent = G.currentNpc.name;
-  $('chatMessages').innerHTML = `
-    <div class="chat-msg npc">"${G.scene?.dialogue || 'Greetings, traveller. What do you wish to know?'}"</div>
-  `;
-  show($('chatPanel'));
-  $('chatInput').focus();
-}
-
-$('chatClose')?.addEventListener('click', () => hide($('chatPanel')));
-
-$('chatSend')?.addEventListener('click', sendChat);
-$('chatInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
-
-async function sendChat() {
-  const input = $('chatInput');
-  const msg = input.value.trim();
+async function sendChatMessage() {
+  if (!DOM.chatInput || !G.currentNpc) return;
+  const msg = DOM.chatInput.value.trim();
   if (!msg) return;
-  input.value = '';
 
-  const messages = $('chatMessages');
-  const userMsg = document.createElement('div');
-  userMsg.className = 'chat-msg user';
-  userMsg.textContent = msg;
-  messages.appendChild(userMsg);
+  DOM.chatInput.value = '';
+  addChatMessage(msg, 'player');
 
-  const loading = document.createElement('div');
-  loading.className = 'chat-msg npc';
-  loading.textContent = '...';
-  messages.appendChild(loading);
-  messages.scrollTop = messages.scrollHeight;
+  // Show typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg chat-npc typing';
+  typing.innerHTML = '<div class="chat-bubble"><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>';
+  DOM.chatMessages.appendChild(typing);
+  DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
 
   try {
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: msg,
-        context: G.scene?.dialogue || '',
-        chapterEra: G.chapter?.era || ''
-      })
+        message:      msg,
+        npcName:      G.currentNpc.name,
+        chapterEra:   G.chapter.era,
+        chapterId:    String(chapterId),
+        chapterTitle: G.chapter.title,
+      }),
     });
+
     const data = await res.json();
-    loading.textContent = `"${data.reply}"`;
-  } catch (e) {
-    loading.textContent = '"I cannot speak at this moment..."';
+    typing.remove();
+
+    addChatMessage(data.reply, 'npc');
+    G.aiOnline = data.model !== 'mock-fallback';
+
+    // Update NPC speech in scene
+    if (DOM.npcSpeech) DOM.npcSpeech.textContent = data.reply;
+
+    // Store in chat history for context
+    G.chatHistory.push({ role: 'user', content: msg });
+    G.chatHistory.push({ role: 'assistant', content: data.reply });
+
+  } catch(e) {
+    typing.remove();
+    addChatMessage('*The connection is lost — perhaps the spirits are interfering...*', 'npc');
   }
-  messages.scrollTop = messages.scrollHeight;
 }
 
-// ─── Inventory Panel ──────────────────────────────────────────────
-$('inventoryBtn')?.addEventListener('click', () => {
-  const body = $('inventoryBody');
-  body.innerHTML = G.stats.inventory.length === 0
-    ? '<p style="opacity:0.5">Your pack is empty.</p>'
-    : G.stats.inventory.map(item => `<div class="inventory-item">${item}</div>`).join('');
-  show($('inventoryPanel'));
-});
-$('inventoryClose')?.addEventListener('click', () => hide($('inventoryPanel')));
+// ─── Sound Effects ───────────────────────────────────────────────
+const sounds = {};
+function initSounds() {
+  // Using Web Audio API for lightweight effects
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    sounds._ctx = ctx;
+  } catch(e) { G.soundEnabled = false; }
+}
 
-// ─── Glossary Panel ───────────────────────────────────────────────
-$('glossaryBtn')?.addEventListener('click', () => {
-  renderGlossaryPanel('');
-  show($('glossaryPanel'));
-});
-$('glossaryClose')?.addEventListener('click', () => hide($('glossaryPanel')));
-$('glossarySearch')?.addEventListener('input', (e) => renderGlossaryPanel(e.target.value));
+function playSound(type) {
+  if (!G.soundEnabled || !sounds._ctx) return;
+  try {
+    const ctx = sounds._ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-function renderGlossaryPanel(filter) {
-  const body = $('glossaryBody');
-  const terms = Object.entries(G.glossary)
-    .filter(([k, v]) => !filter || k.toLowerCase().includes(filter.toLowerCase()) || v.definition.toLowerCase().includes(filter.toLowerCase()));
+    const configs = {
+      click:   { freq: 440, type: 'sine',   dur: 0.08, vol: 0.1 },
+      earn:    { freq: 880, type: 'sine',   dur: 0.3,  vol: 0.15 },
+      correct: { freq: 660, type: 'sine',   dur: 0.4,  vol: 0.2 },
+      wrong:   { freq: 220, type: 'square', dur: 0.3,  vol: 0.15 },
+      decision:{ freq: 550, type: 'sine',   dur: 0.2,  vol: 0.1 },
+    };
 
-  if (terms.length === 0) {
-    body.innerHTML = '<p style="opacity:0.5">No terms found.</p>';
-    return;
+    const c = configs[type] || configs.click;
+    osc.frequency.value = c.freq;
+    osc.type = c.type;
+    gain.gain.setValueAtTime(c.vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + c.dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + c.dur);
+  } catch(e) {}
+}
+
+// ─── Modals ───────────────────────────────────────────────────────
+function openInventory() {
+  if (!DOM.invItems) return;
+  DOM.invItems.innerHTML = G.stats.inventory.length
+    ? G.stats.inventory.map(item => `<div class="inv-item">🎒 ${item}</div>`).join('')
+    : '<p class="empty-inv">Your pack is empty.</p>';
+  
+  const startItems = G.chapter?.startingStats?.inventory || [];
+  if (startItems.length) {
+    DOM.invItems.innerHTML += `<hr><p class="inv-section">Starting items:</p>` +
+      startItems.map(i => `<div class="inv-item inv-start">📦 ${i}</div>`).join('');
   }
+  show(DOM.invModal);
+}
 
-  body.innerHTML = terms.map(([k, v]) => `
-    <div class="glossary-item">
-      <div class="glossary-term">${v.image || '📖'} ${k}</div>
-      <div class="glossary-def">${v.definition}</div>
-      ${v.link ? `<a class="glossary-link" href="${v.link}" target="_blank">🔗 External resource</a>` : ''}
+function openGlossary() {
+  if (!DOM.glossList) return;
+  const chapterTerms = G.chapter?.glossary || [];
+  const terms = chapterTerms.length ? chapterTerms : Object.keys(G.glossary);
+
+  DOM.glossList.innerHTML = terms.map(term => {
+    const def = G.glossary[term] || { definition: 'See textbook.', era: G.chapter?.era };
+    return `
+      <div class="gloss-item glass" onclick="this.classList.toggle('open')">
+        <div class="gloss-term">${term}</div>
+        <div class="gloss-def">${md(def.definition || def)}</div>
+        ${def.era ? `<div class="gloss-era">Era: ${def.era}</div>` : ''}
+      </div>
+    `;
+  }).join('') || '<p>No glossary terms for this chapter.</p>';
+  show(DOM.glossModal);
+}
+
+function openMap() {
+  if (!DOM.mapContent || !G.chapter) return;
+  const scenes = G.chapter.scenes || [];
+  DOM.mapContent.innerHTML = `
+    <h3>${G.chapter.title}</h3>
+    <div class="map-journey">
+      ${scenes.map((s, i) => {
+        const visited = G.sceneHistory.includes(s.id);
+        const current = G.scene?.id === s.id;
+        return `
+          <div class="map-node ${visited ? 'visited' : ''} ${current ? 'current' : ''} type-${s.type}">
+            <div class="map-dot">${current ? '📍' : visited ? '✓' : '○'}</div>
+            <div class="map-label">${s.title || s.id}</div>
+          </div>
+          ${i < scenes.length - 1 ? '<div class="map-line"></div>' : ''}
+        `;
+      }).join('')}
     </div>
-  `).join('');
+    <div class="map-legend">
+      <span class="legend-visited">✓ Visited</span>
+      <span class="legend-current">📍 Current</span>
+    </div>
+  `;
+  show(DOM.mapModal);
 }
 
-// ─── Map Button ────────────────────────────────────────────────────
-$('mapBtn')?.addEventListener('click', () => {
-  toast(`Current location: ${G.chapter?.region || 'Unknown'} — ${G.scene?.title || ''}`, 'info');
-});
+// ─── Placeholder Replacement ─────────────────────────────────────
+function replacePlaceholders(text) {
+  return text
+    .replace(/\{\{money\}\}/g, `${G.stats.money} ${G.stats.currency}`)
+    .replace(/\{\{health\}\}/g, String(G.stats.health))
+    .replace(/\{\{player\}\}/g, G.player.name)
+    .replace(/\{\{character\}\}/g, G.player.character?.name || G.player.name)
+    .replace(/\{\{currency\}\}/g, G.stats.currency);
+}
 
-// ─── Progress Save/Load ────────────────────────────────────────────
+// ─── Save / Load Progress ────────────────────────────────────────
 function saveProgress() {
-  const data = { chapterId, stats: G.stats, sceneHistory: G.sceneHistory, playerName: G.player.name };
-  localStorage.setItem('chronoquest_progress', JSON.stringify(data));
+  const data = {
+    chapterId,
+    player:   G.player,
+    stats:    G.stats,
+    history:  G.sceneHistory.slice(-20),
+    scene:    G.scene?.id,
+    jobsDone: G.jobsDone,
+    ts:       Date.now(),
+  };
+  localStorage.setItem(`cq_progress_${chapterId}`, JSON.stringify(data));
+
+  // Also save to server
   fetch('/api/progress/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   }).catch(() => {});
 }
 
-// ─── Init ──────────────────────────────────────────────────────────
-loadChapter(chapterId);
+function loadProgress() {
+  const raw = localStorage.getItem(`cq_progress_${chapterId}`);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch(e) { return null; }
+}
+
+// ─── Init ────────────────────────────────────────────────────────
+async function init() {
+  // Load chapter data
+  const res = await fetch(`/api/chapters/${chapterId}`);
+  if (!res.ok) { document.body.innerHTML = '<p style="color:white;padding:20px">Chapter not found.</p>'; return; }
+  G.chapter = await res.json();
+
+  // Load glossary
+  try {
+    const gr = await fetch('/api/glossary');
+    const glossaryData = await gr.json();
+    // Support both array and object formats
+    if (Array.isArray(glossaryData)) {
+      glossaryData.forEach(entry => {
+        if (entry.term) G.glossary[entry.term] = entry;
+      });
+    } else {
+      G.glossary = glossaryData;
+    }
+  } catch(e) { console.warn('Glossary load failed:', e.message); }
+
+  // Apply chapter starting stats
+  if (G.chapter.startingStats) {
+    G.stats = {
+      ...G.stats,
+      ...G.chapter.startingStats,
+      maxHealth: G.chapter.startingStats.maxHealth || G.chapter.startingStats.health || 100,
+    };
+  }
+
+  // Restore saved progress
+  const saved = loadProgress();
+  if (saved && saved.chapterId == chapterId && saved.ts > Date.now() - 24 * 60 * 60 * 1000) {
+    G.stats        = saved.stats   || G.stats;
+    G.player       = saved.player  || G.player;
+    G.sceneHistory = saved.history || [];
+    G.jobsDone     = saved.jobsDone || [];
+  }
+
+  // Apply theme
+  applyChapterTheme(G.chapter.theme);
+
+  // Init sounds
+  initSounds();
+
+  // Wire up HUD buttons
+  $('inventoryBtn')?.addEventListener('click', openInventory);
+  $('glossaryBtn')?.addEventListener('click',  openGlossary);
+  $('mapBtn')?.addEventListener('click',        openMap);
+
+  // Close buttons
+  DOM.invClose?.addEventListener('click',    () => hide(DOM.invModal));
+  DOM.glossClose?.addEventListener('click',  () => hide(DOM.glossModal));
+  DOM.mapClose?.addEventListener('click',    () => hide(DOM.mapModal));
+  DOM.chatClose?.addEventListener('click',   () => hide(DOM.chatModal));
+  $('eduClose')?.addEventListener('click',   () => hide(DOM.eduPopup));
+
+  // Chat
+  DOM.talkBtn?.addEventListener('click',    openChatModal);
+  DOM.chatSend?.addEventListener('click',   sendChatMessage);
+  DOM.chatInput?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } });
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) hide(modal);
+    });
+  });
+
+  // Clickable glossary terms in narrative
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('gloss-link')) {
+      const term = e.target.dataset.term;
+      if (term) showEduPopup(term, G.glossary[term]?.definition);
+    }
+  });
+
+  // Check if chapter has character select
+  const hasCharSelect = G.chapter.scenes.find(s => s.type === 'character-select');
+  const startScene = hasCharSelect?.id || G.chapter.scenes[0]?.id || 'intro';
+
+  // If progress exists and has a valid scene, ask to continue
+  const savedScene = saved?.scene;
+  if (savedScene && G.chapter.scenes.find(s => s.id === savedScene) && savedScene !== startScene) {
+    if (confirm(`Resume from "${savedScene}"? (Cancel to start over)`)) {
+      G.sceneHistory.pop(); // Remove the scene we're about to render
+      renderScene(savedScene);
+    } else {
+      G.stats    = { ...G.chapter.startingStats, maxHealth: G.chapter.startingStats?.health || 100, inventory: [...(G.chapter.startingStats?.inventory || [])] };
+      G.jobsDone = [];
+      renderScene(startScene);
+    }
+  } else {
+    renderScene(startScene);
+  }
+
+  updateHUD();
+}
+
+// ─── Start ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', init);
